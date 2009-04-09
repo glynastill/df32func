@@ -1,0 +1,6 @@
+Building
+========
+
+Use MinGW:
+    make clean
+    make

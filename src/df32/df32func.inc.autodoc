@@ -1,0 +1,227 @@
+df32func.inc last compiled on 09/04/2009 at 21:45:13.05 
+df32func DLL functions: 
+tcpcomm.h:external_function ClientSocket "ClientSocket" df32func.dll dword port string host returns integer
+tcpcomm.h:external_function ServerSocket "ServerSocket" df32func.dll dword port returns integer
+tcpcomm.h:external_function AcceptClient "AcceptClient" df32func.dll returns integer
+tcpcomm.h:external_function Send "Send" df32func.dll dword socket string data returns integer
+tcpcomm.h:external_function Receive "Receive" df32func.dll dword socket pointer dataOut returns integer
+tcpcomm.h:external_function CloseConnection "CloseConnection" df32func.dll dword socket returns integer
+tcpcomm.h:external_function PseudoRand "PseudoRand" df32func.dll dword w returns integer
+tcpcomm.h:external_function RdtscRand "RdtscRand" df32func.dll returns integer
+win32.h:external_function GetDateFormat "GetDateFormatA" kernel32.dll dword LCID dword dwFlags pointer lpsSystemTime pointer lpFormat pointer lpDateStr integer cchDate returns integer
+win32.h:external_function GetTimeFormat "GetTimeFormatA" kernel32.dll dword LCID dword dwFlags pointer lpsSystemTime pointer lpFormat pointer lpTimeStr integer cchTime returns integer
+win32.h:external_function GetFileTime "GetFileTime" kernel32.dll handle hFileHandle pointer lpCreationTime pointer lpLastAccessTime pointer lpLastWriteTime returns integer
+win32.h:external_function FileTimeToSystemTime "FileTimeToSystemTime" kernel32.dll pointer lpFileTime Pointer lpSystemTime returns integer
+win32.h:external_function FileTimeToLocalFileTime "FileTimeToLocalFileTime" kernel32.dll pointer lpFileTime Pointer lpSystemTime returns integer
+win32.h:external_function FindFirstFile "FindFirstFileA" kernel32.dll pointer lpFileName pointer lpFindFileData returns handle
+win32.h:external_function FindNextFile "FindNextFileA" kernel32.dll handle hFindFile pointer lpFindFileData returns integer
+win32.h:external_function FindClose "FindClose" kernel32.dll handle hFindFile returns integer
+win32.h:external_function LockFile "LockFile" kernel32.dll handle hFile dword dwFileOffsetLow dword dwFileOffsetHigh dword nNumberOfBytesToLockLow dword nNumberOfBytesToLockHigh returns integer
+win32.h:external_function UnlockFile "UnlockFile" kernel32.dll handle hFile dword dwFileOffsetLow dword dwFileOffsetHigh dword nNumberOfBytesToLockLow dword nNumberOfBytesToLockHigh returns integer
+win32.h:external_function SHFileOperation "SHFileOperationA" shell32.dll pointer lpFileOp returns integer
+win32.h:external_function32 GetTempPath "GetTempPathA" kernel32.dll integer nBufferLength pointer lpBuffer_ptr returns integer
+win32.h:external_function GetSystemDirectory "GetSystemDirectoryA" kernel32.dll pointer lpBuffer integer uSize returns integer
+win32.h:external_function32 mciSendString "mciSendStringA" winmm.dll pointer lpstrCommand pointer lpstrReturnString integer uReturnLength integer hwndCallback returns integer
+win32.h:external_function ExitProcessEx  "ExitProcess" Kernel32.dll integer iExitCode returns integer
+win32.h:external_function GetComputername "GetComputerNameA" kernel32.dll pointer sBuffer pointer lSize returns integer
+win32.h:external_function WNetGetUser "WNetGetUserA" MPR.dll pointer lpName pointer lpUserName string  lpnLength returns DWord
+win32.h:external_function SHBrowseForFolder "SHBrowseForFolder" shell32.dll pointer lpsBrowseInfo returns dword
+win32.h:external_function SHGetPathFromIDList "SHGetPathFromIDList" shell32.dll pointer pidList pointer lpBuffer returns dWord
+win32.h:external_function CoTaskMemFree "CoTaskMemFree" ole32.dll pointer pV returns integer
+win32.h:external_function GetPID "_getpid" msvcrt.dll returns integer
+win32.h:external_function getShortPathName "GetShortPathNameA" kernel32.dll pointer lpszLongPath pointer lpszShortPath integer cchBuffer returns integer
+win32.h:external_function SetConsoleTitle "SetConsoleTitleA" Kernel32.dll string lpszTitle returns integer
+win32.h:external_function FindWindow "FindWindowA" user32.dll pointer lpszClassName string lpszWindowName returns handle
+win32.h:external_function GetSystemMenu "GetSystemMenu" user32.dll handle hwnd dword bRevert returns dword
+win32.h:external_function EnableMenuItem "EnableMenuItem" user32.dll handle hmenu integer uIDEnableItem integer uEnable returns integer
+win32.h:external_function ShellExecute "ShellExecuteA" shell32.dll handle hWnd pointer lpOperation pointer lpFile pointer lpParameters pointer lpDirectory integer nShowCmd returns integer
+win32.h:external_function CreateProcess "CreateProcessA" kernel32.dll pointer lpAN pointer lpCL pointer lpPA pointer lpTA integer bIH dword dwCF pointer lpE pointer lpCD pointer lpSI pointer lpPi returns integer
+win32.h:external_function OpenProcess "OpenProcess" kernel32.dll dword dwDesiredAccessas integer bInheritHandle dword dwProcId returns handle
+win32.h:external_function TerminateProcess "TerminateProcess" kernel32.dll handle hProcess integer uExitCode returns integer
+win32.h:external_function CloseHandle "CloseHandle" kernel32.dll handle hObject returns integer
+win32.h:external_function WaitForSingleObject "WaitForSingleObject" kernel32.dll handle hHandle dword dwMilliseconds returns integer
+win32.h:external_function32 Message_Beep "MessageBeep" user32.dll integer iSound returns integer
+win32.h:external_function32 ExitWindowsEx "ExitWindowsEx" user32.dll integer uFlags integer dwReserved returns integer
+win32.h:external_function lOpen "_lopen" kernel32.dll string lpPathName integer iReadWrite returns integer
+win32.h:external_function lClose "_lclose" kernel32.dll handle hFile returns integer
+win32.h:external_function GetLastError "GetLastError" kernel32.dll returns integer
+win32.h:external_function CreateFile "CreateFileA" kernel32.dll pointer lpFNname dword dwDAccess dword dwSMode pointer lpSecAttrib dword dwCreationDisp dword dwFlagsAndAttrib handle hTemplateFile returns handle
+win32.h:external_function GetFileSize "GetFileSize" kernel32.dll handle hFile pointer lpFileSizeHigh returns integer
+win32.h:external_function SetFilePointer "SetFilePointer" kernel32.dll handle hFile dword lDistanceToMove pointer lpDistanceToMoveHigh dword dwMoveMethod returns handle
+win32.h:external_function ReadFile "ReadFile" kernel32.dll handle hFile pointer lpBuffer integer nNumberOfBytesToRead pointer lpNumberOfBytesRead pointer lpOverlapped returns integer
+win32.h:external_function CopyMemory "RtlMoveMemory" kernel32.dll pointer pDst pointer pSrc integer byteLen returns integer
+win32.h:external_function EnumProcesses "EnumProcesses" psapi.dll pointer lpidProcess integer cb pointer cbNeeded returns integer
+win32.h:external_function EnumProcessModules "EnumProcessModules" psapi.dll  handle hProcess pointer lphModule integer cb integer cbNeeded returns integer
+win32.h:external_function WideCharToMultiByte "WideCharToMultiByte" kernel32.dll integer cp dword dwF pointer lpWCS integer cchWC pointer lpMBS integer cchMB string dC string uDC returns integer
+win32.h:external_function GetSystemTime "GetSystemTime" kernel32.dll Pointer lpGST returns VOID_TYPE
+win32.h:external_function GetTickCount "GetTickCount" kernel32.dll returns dWord
+win32.h:external_function32 CoCreateGuid "CoCreateGuid" ole32.dll pointer pGUIDStructure returns word
+win32.h:external_function32 StringFromGUID2 "StringFromGUID2" ole32.dll pointer pGUIDStructure pointer lpstrClsId integer cbMax returns dword
+win32.h:external_function MsiQueryProductState "MsiQueryProductStateA" msi.dll string szProduct returns integer
+win32.h:external_function MilliSleep "Sleep" kernel32.dll integer dwMilliseconds returns integer
+win32.h:external_function SetLastError "SetLastError" kernel32.dll dword dwErrCode returns integer
+win32.h:external_function FormatMessage "FormatMessageA" kernel32.dll integer dwFlags pointer lpSource dword dwMessageId dword dwLanguageId pointer lpBuffer integer nSize dword Arguments returns integer
+win32.h:external_function GetProcessMemoryInfo "GetProcessMemoryInfo" PSAPI.DLL dword l_hProcess pointer ppsmemCounters dword cb returns integer
+win32.h:external_function MultiByteToWideChar "MultiByteToWideChar" kernel32.dll integer cp dword dwF pointer lpWCS integer cchWC pointer lpMBS integer cchMB string dC string uDC returns integer
+win32.h:external_function GetDiskFreeSpace "GetDiskFreeSpaceA" kernel32.dll string lpRootPathName pointer lpSectorsPC pointer lpBytesPS pointer lpNumberOfFreeClusters pointer lpTotalNOC returns integer
+win32.h:external_function InternetCanonicalizeUrl "InternetCanonicalizeUrlA" wininet.dll pointer lpszUrl pointer lpszBuffer pointer lpdwBufferLength dword dwFlags returns integer
+win32.h:external_function CryptAcquireContext "CryptAcquireContextA" advapi32.dll pointer phProv string pszContainer string pszProvider dword dwProvType dword dwFlags returns integer
+win32.h:external_function CryptReleaseContext "CryptReleaseContext" advapi32.dll pointer phProv dword dwFlags returns integer
+win32.h:external_function CryptCreateHash "CryptCreateHash" advapi32.dll handle hProv dword Algid handle hKey dword dwFlags pointer phHash returns integer
+win32.h:external_function CryptDestroyHash "CryptDestroyHash" advapi32.dll handle hHash returns integer
+win32.h:external_function CryptHashData "CryptHashData" advapi32.dll handle hHash pointer pbData dword dwDataLen dword dwFlags returns integer
+win32.h:external_function CryptGetHashParam "CryptGetHashParam" advapi32.dll handle hHash dword dwParam pointer pbData pointer pdwDataLen dword dwFlags returns integer
+win32.h:external_function CryptEnumProviders "CryptEnumProvidersA" advapi32.dll dword dwIndex pointer pdwReserved dword dwFlags pointer pdwProvType pointer pcbProvName pointer pszProvName returns integer
+win32.h:external_function CryptBinaryToString "CryptBinaryToStringA" crypt32.dll dword pbBinary dword cbBinary dword dwFlags pointer pszString pointer pcchString returns integer
+win32.h:external_function CryptGetProvParam "CryptGetProvParam" advapi32.dll handle hProv dword dwParam pointer pbData pointer pdwDataLen dword dwFlags returns integer
+win32.h:external_function CryptContextAddRef "CryptGetProvParam" advapi32.dll handle hProv dword pdwReserved dword dwFlags returns integer
+win32.h:external_function CryptImportKey "CryptImportKey" advapi32.dll handle hProv pointer pbData pointer pdwDataLen dword hPubKey dword dwFlags pointer phKey returns integer
+win32.h:external_function CryptExportKey "CryptExportKey" advapi32.dll handle hKey handle hExpKey dword dwBlobType dword dwFlags pointer pbData pointer pdwDataLen returns integer
+win32.h:external_function CryptDeriveKey "CryptDeriveKey" advapi32.dll handle hProv dword Algid handle hHash dword dwFlags pointer phKey returns integer
+win32.h:external_function CryptDestroyKey "CryptDestroyKey" advapi32.dll handle hKey returns integer
+win32.h:external_function CryptEncrypt "CryptEncrypt" advapi32.dll handle hKey handle hHash dword bFinal dword dwFlags pointer pbData pointer pdwDataLen dword dwBufLen returns integer
+win32.h:external_function CryptDecrypt "CryptDecrypt" advapi32.dll handle hKey handle hHash dword bFinal dword dwFlags pointer pbData pointer pdwDataLen returns integer
+win32.h:external_function CryptSetKeyParam "CryptSetKeyParam" advapi32.dll handle hKey dword dwParam pointer pbData dword dwFlags returns integer
+win32.h:external_function CryptBinaryToString "CryptBinaryToStringA" crypt32.dll dword pbBinary dword cbBinary dword dwFlags pointer pszString pointer pcchString returns integer
+win32.h:external_function CryptStringToBinary "CryptStringToBinaryA" crypt32.dll pointer pszString dword cchString dword dwFlags pointer pbBinary pointer pcbBinary pointer pdwSkip pointer pdwFlags returns integer
+win32.h:external_function GetVersionEx "GetVersionExA" kernel32.dll pointer lpVersionInfo returns integer
+win32.h:external_function GetSystemTime "GetSystemTime" kernel32.dll pointer lpSystemTime returns integer
+win32.h:external_function GetTimeZoneInformation "GetTimeZoneInformation" kernel32.dll pointer lpTimeZoneInformation returns integer
+win32.h:external_function GetTzi "GetTzi" timezone.dll pointer lpTimeZone pointer lpResult returns integer
+df32func functions: 
+console.inc:function set_mode global integer argv returns integer
+console.inc:function screen_display global string argv returns integer
+console.inc:function draw_bigchar global string argv integer posx integer posy returns integer
+console.inc:function big_text global string argv integer posx integer posy returns integer
+date.inc:function get_day_score global date argv returns integer
+date.inc:function get_day global date argv returns string
+date.inc:function get_month global date argv returns string
+date.inc:function get_day_of global date argv returns string
+date.inc:function fulldate global date argv returns string
+date.inc:function shortdate global date argv returns string
+date.inc:function now global string argv returns string
+date.inc:function rssdate global date argv string argv2 returns string
+date.inc:function cymd global date argv returns string
+date.inc:function sqldate global date argv returns string
+date.inc:function sqltimestamp global date argv integer argv2 integer argv3 integer argv4 returns string
+date.inc:function dftimestamp global date argv integer argv2 integer argv3 integer argv4 returns string
+date.inc:function sqldatetime global string argv string argv2 returns string
+date.inc:function sqltimestampformat global string argv string argv2 returns string
+date.inc:function last_day_of_month global integer month integer year returns date
+date.inc:function posixtime global date argv number argv2 number argv3 number argv4 number argv5 returns number
+date.inc:function posixtime_reverse global number argv returns string
+date.inc:function runtime_timeout global integer argv returns integer
+date.inc:function runtime_timeout_reset global returns integer
+date.inc:function runtime_timeout_left global returns integer
+encode.inc:function is_base64 global integer c returns integer
+encode.inc:function int_encode64 global integer uc returns integer
+encode.inc:function int_decode64 global integer c returns integer
+encode.inc:function encode64 global string sText returns string
+encode.inc:function decode64 global string sText returns string
+encode.inc:function rc4_array_value integer iIndex returns integer
+encode.inc:function rc4 global string key string text returns string
+encode.inc:function rc4encode global string key string text returns string
+encode.inc:function rc4decode global string key string text returns string
+encode.inc:function rc4encode_base64 global string key string text returns string
+encode.inc:function rc4decode_base64 global string key string text returns string
+hash.inc:function hash_for_df_arrays global string argv returns integer
+hash.inc:function reduce_hash global integer argv returns integer
+hash.inc:function hash_djb2 global string argv returns integer
+hash.inc:function hash_sdbm global string argv returns integer
+hash.inc:function hash_lazy global string argv returns integer
+math.inc:function decround global number argv integer argv2 returns string
+math.inc:function rshift global integer argv integer shift_by returns integer
+math.inc:function lshift global integer argv integer shift_by returns integer
+math.inc:function ternary global string argv string argv2 string argv3 returns string
+string.inc:function titlecase global string argv returns string
+string.inc:function replaceall global string argv string argv2 string argv3 returns string
+string.inc:function zeropad global string argv integer argv2 returns string
+string.inc:function leftpad global string argv integer argv2 returns string
+string.inc:function reverse global string argv returns string
+string.inc:function addslashes global string argv returns string
+string.inc:function quotecsv global string argv returns string
+string.inc:function sanitize_int global integer l_iInput integer bound returns integer
+string.inc:function sanitize_num global number l_nInput returns integer
+string.inc:function sanitize_str global string l_sInput string l_sLevel returns string
+string.inc:function nbstring global string argv string argv2 returns string
+string.inc:function msxsl global string engine string source string stylesheet string params string outfile returns string
+tstamp.inc:function timestemp_to_posix global string inTs returns number
+tstamp.inc:function posix_to_timestamp global number argv returns string
+tstamp.inc:function timestamp_adjust global string inTs number inMSeconds returns string
+tstamp.inc:function interval_to_posix global string argv returns number
+tstamp.inc:function timestamp_adjust_interval global string inTs string inInterval returns string
+tstamp.inc:function get_day_of_month_for_daylight_savings global integer inYear integer inMonth integer inDayOfWeek integer inDay returns integer
+tstamp.inc:function systemtime_utc global returns string
+tstamp.inc:function get_bias global string inDestTz integer inYear integer inMon integer inDay integer inHr integer inMin integer inSec integer inIsUTC returns integer
+tstamp.inc:function get_utc_time_from_timezone_time global string inDestTz string inTs returns string
+tstamp.inc:function get_timezone_time_from_utc_time global string inDestTz string inTs returns string
+tstamp.inc:function get_timezone_time_from_timezone_time global string inSourceTz string inDestTz string inTs returns string
+win32.inc:function convert_date_format global dword dwLowDateTime dword dwHighDateTime returns string
+win32.inc:function list_directory global string argv returns string
+win32.inc:function sort_results global integer argv integer argv2 returns integer
+win32.inc:function fileopp global string argv string argv2 string argv3 returns integer
+win32.inc:function get_local_temp global integer argv returns string
+win32.inc:function get_local_system global integer argv returns string
+win32.inc:function cd_tray global integer argv returns integer
+win32.inc:function exit_process global integer iReturnCode returns integer
+win32.inc:function get_process_id global integer argv returns integer
+win32.inc:function get_computer global integer argv returns string
+win32.inc:function get_user_name global integer argv returns string
+win32.inc:function folder_browse global string argv returns String
+win32.inc:function get_short_path global string argv returns string
+win32.inc:function disable_close global integer argv returns integer
+win32.inc:function shell_exec global string argv string argv2 string argv3 returns integer
+win32.inc:function create_proc global string argv integer argv2 integer argv3 integer argv4 returns string
+win32.inc:function term_proc global string argv integer argv2 returns integer
+win32.inc:function is_locked global string argv returns integer
+win32.inc:function does_exist global string argv returns integer
+win32.inc:function buffer_text_file global string argv string argv2 returns integer
+win32.inc:function file_size_bytes global string argv returns integer
+win32.inc:function to_ascii global string argv returns string
+win32.inc:function to_unicode global string argv returns string
+win32.inc:function to_utf8 global string argv returns string
+win32.inc:function get_procs global integer argv returns integer
+win32.inc:function time_data global integer argv returns string
+win32.inc:function fill_0 global integer iValue integer iSize returns string
+win32.inc:function check_date_error global string sDate returns date
+win32.inc:function get_time global string sFileName integer iMode returns string
+win32.inc:function create_guid global returns string        
+win32.inc:function get_last_error_detail global integer iError returns string
+win32.inc:function disk_info global string argv string argv2 returns number
+win32.inc:function get_mem_usage global returns integer
+win32.inc:function urldecode global string argv returns string
+win32.inc:function urlencode global string argv returns string
+win32.inc:function get_os_version global returns string
+win32.inc:function get_os_version_numeric global returns number
+win32.inc:function binary_to_string_to_binary global string argv string argv2 string argv3 returns string
+win32.inc:function binary_to_string global string argv string argv2 returns string
+win32.inc:function string_to_binary global string argv string argv2 returns string
+win32.inc:function ms_adv_listproviders global returns integer
+win32.inc:function msAdvCrypt_hash global string in_data string in_hash returns string
+win32.inc:function sha512_hex global string in_data returns string
+win32.inc:function sha512_base64 global string in_data returns string
+win32.inc:function sha384_hex global string in_data returns string
+win32.inc:function sha384_base64 global string in_data returns string
+win32.inc:function sha256_hex global string in_data returns string
+win32.inc:function sha256_base64 global string in_data returns string
+win32.inc:function sha1_hex global string in_data returns string
+win32.inc:function sha1_base64 global string in_data returns string
+win32.inc:function md5_hex global string in_data returns string
+win32.inc:function md5_base64 global string in_data returns string
+win32.inc:function aes256_hex_enc global string in_data string in_key returns string
+win32.inc:function aes256_hex_dec global string in_data string in_key returns string
+df32func procedures: 
+encode.inc:procedure set rc4_array_value integer iIndex integer iVal
+encode.inc:procedure create_rc4_key string key
+df32func classes: 
+data.inc:class linkedlist is an array
+data.inc:class hashtable is an array
+data.inc:class hash is an array
+data.inc:class matrix is an array
+data.inc:class rss20 is a matrix
+data.inc:class filelist is a matrix
+data.inc:class UnicodeReader is an array
+data.inc:class ListDirectory is a matrix
+data.inc:class ProcessList is an array
+string.inc:class StringTokenizer is an array
+win32.inc:class msAdvCrypt is an array
