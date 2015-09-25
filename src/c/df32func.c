@@ -2,17 +2,32 @@
  * df32func.c
  *     df32func extensions for Console Mode DataFlex 3.2
  *
- * Copyright (c) 2007-2009, glyn@8kb.co.uk
+ * Copyright (c) 2007-2015, glyn@8kb.co.uk
  * Author: Glyn Astill <glyn@8kb.co.uk>
  *
  *-------------------------------------------------------------------------
  */
 
-#include "df32func.h"
 #include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <winsock.h>
+#include <tchar.h>
+#include "gnuregex.h"
+#include "df32func.h"
+
+/*
+ * Used by GetTzi
+ * http://msdn.microsoft.com/en-us/library/ms724253.aspx
+ */
+typedef struct _REG_TZI_FORMAT
+{
+    LONG Bias;
+    LONG StandardBias;
+    LONG DaylightBias;
+    SYSTEMTIME StandardDate;
+    SYSTEMTIME DaylightDate;
+} REG_TZI_FORMAT;
 
 SOCKET s, sc; /* Socket handle */
 
@@ -195,6 +210,119 @@ DLLIMPORT unsigned int RdtscRand(){
      }
      return n;
 }
+
+/*
+ * Pull back timezone information from windows registry
+ */
+DLLIMPORT int GetTzi (TCHAR* zone, TCHAR *result)
+{
+    DWORD dwStatus, dwType, cbData;
+    int cch;
+    TCHAR szTime[128], szDate[128], szSubKey[256];
+    HKEY hKey;
+    REG_TZI_FORMAT tzi;
+
+    /* https://msdn.microsoft.com/en-us/library/windows/desktop/ms647490%28v=vs.85%29.aspx */
+    lstrcpy(szSubKey, TEXT("SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Time Zones\\"));
+
+    /*
+     * https://msdn.microsoft.com/en-us/library/aa272954%28v=vs.60%29.aspx
+     * https://msdn.microsoft.com/en-us/library/h1x0y282.aspx
+     */
+    _tcscat(szSubKey, zone);
+
+    dwStatus = RegOpenKeyEx(HKEY_LOCAL_MACHINE, szSubKey, 0, KEY_QUERY_VALUE, &hKey);
+    if (dwStatus != NO_ERROR)
+        return GetLastError();
+
+    cbData = sizeof(REG_TZI_FORMAT);
+    dwStatus = RegQueryValueEx (hKey, TEXT("TZI"), NULL, &dwType, (LPBYTE)&tzi, &cbData);
+    if (dwStatus != NO_ERROR)
+        return GetLastError();
+
+    /*
+     * tzi.StandardDate and tzi.DaylightDate are not a real SYSTEMTIME
+     * but we should look at them to depict daylight saving
+     * if month = 0 then not supported, year = 0 means every year.
+     * http://msdn.microsoft.com/en-us/library/ms725481.asp
+     */
+
+     _stprintf(result, "%d,%d,%d,%d/%d/%d/%d,%d:%d:%d,%d/%d/%d/%d,%d:%d:%d",
+                      tzi.Bias,tzi.StandardBias,tzi.DaylightBias,
+                      tzi.StandardDate.wYear,tzi.StandardDate.wMonth,tzi.StandardDate.wDay,tzi.StandardDate.wDayOfWeek,tzi.StandardDate.wHour,tzi.StandardDate.wMinute,tzi.StandardDate.wSecond,
+                      tzi.DaylightDate.wYear,tzi.DaylightDate.wMonth,tzi.DaylightDate.wDay,tzi.DaylightDate.wDayOfWeek,tzi.DaylightDate.wHour,tzi.DaylightDate.wMinute,tzi.DaylightDate.wSecond
+                      );
+
+    return -1;
+}
+
+/*
+ * Check for a regex match
+ */
+DLLIMPORT int RegexpMatch (const char *str, const char *pattern, const char *flags, int errors)
+{
+    return regexp_match(str, pattern, flags, errors);
+}
+
+/*
+ * Return all matches in the regex as a string and return in custom format
+ */
+DLLIMPORT int RegexpMatches(const char *str, const char *pattern, const char *flags, char *output, int output_len, int errors)
+{
+    char        *matches = regexp_matches(str, pattern, flags, errors);
+    int         matches_len;
+    int         result = 0;
+
+    if (matches != NULL)
+    {
+        matches_len = strlen(matches);
+        if (matches_len <= output_len)
+        {
+            strncpy(output, matches, matches_len);
+            result = 0;
+        }
+        else
+            result = -1;
+
+        wfree(matches);
+    }
+    else
+        result = -2;
+
+    return result;
+}
+
+/*
+ * Substitutes matches with the regex pattern in the string with the replacement
+ * pattern/string.
+ */
+DLLIMPORT int RegexpReplace(const char *str, const char *pattern, const char *replacement, const char *flags, char *output, int output_len, int errors)
+{
+    char        *replaced = regexp_replace(str, pattern, replacement, flags, errors);
+    int         replaced_len;
+    int         result = 0;
+
+    if (replaced != NULL)
+    {
+        replaced_len = strlen(replaced);
+
+        if (replaced_len <= output_len)
+        {
+            strncpy(output, replaced, replaced_len);
+            result = 0;
+        }
+        else
+            result = -1;
+
+        wfree(replaced);
+    }
+    else
+        result = -2;
+
+
+    return result;
+}
+
 
 /*
  * DLL entry point

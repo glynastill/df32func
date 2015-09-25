@@ -5,7 +5,7 @@
 //
 // This file is to be included in df32func.mk
 //
-// Copyright (c) 2006-2009, glyn@8kb.co.uk
+// Copyright (c) 2006-2015, glyn@8kb.co.uk
 // 
 // df32func/macro.inc
 //-------------------------------------------------------------------------
@@ -29,7 +29,7 @@
 //     ASSERT (1=2) "TEST ASSERT"
 //
 #COMMAND ASSERT R
-    #IFDEF enable_dfassert
+    #IFDEF ENABLE_DFASSERT
         #IF (!0=2)
             #IFTYPE !1 "I"
                 if (!1 = 0);

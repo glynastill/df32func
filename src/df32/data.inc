@@ -5,7 +5,7 @@
 //
 // This file is to be included in df32func.mk
 //
-// Copyright (c) 2006-2009, glyn@8kb.co.uk
+// Copyright (c) 2006-2015, glyn@8kb.co.uk
 // 
 // df32func/data.inc
 //-------------------------------------------------------------------------
@@ -799,6 +799,8 @@ end_class
 //    hash_is_unique                - Add a unique constraint on the hash
 //    remove_hash_is_unique         - Remove a unique constraint from the hash
 //    matrix_index_lookup_clear     - Clear the lookup buffer
+//    matrix_append_csv				- Append some data in CSV format to the array E.g. ('My Name,"My,\"address\""')
+//    matrix_copy_csv				- Copy csv data from sprecified file into matrix
 //
 // Set methods:
 //    matrix_value                  - Set a value at X, Y
@@ -815,19 +817,22 @@ end_class
 //    matrix_index_lookup_clear     - Clear the buffer for an indexed lookup
 //    matrix_index_count_from_value - Get a count of rows with a particular value
 //    matrix_index_from_value       - Get the next X pos (row) with indexed value. Returns -1 when nothing left to find.
+//    item_count					- Get count of rows in matrix
+//    item_width					- Get count of columns in matrix
 //    
 // Example usage:
-//
 //
 //    object test is a matrix
 //    end_object
 //
 //    set matrix_value of (test(current_object)) item 0 item 1 to "1"    - x then y pos to Value
 //    get matrix_value of (test(current_object)) item 0 item 1 to tmpStr - x then y pos to Value
+//    send matrix_append_csv to test ('My Name,"My,\"address\""')        - Append CSV data to the end of the matrix
+//	  send matrix_copy_csv to (test(current_object)) "f:\data.csv"		- Copy data from csv file into matrix
 //    send matrix_sort to (test(current_object)) 1               - x then y pos to sort by
 //    send matrix_delete to (test(current_object)) 1 1           - x then y pos to delete 
 //    send matrix_delete_row to (test(current_object)) 1             - x essentially blanks record out, no reshuffle
-//    send delete_item to (test1(current_object)) 1              - x pos (not v efficient), reshuffles
+//    send delete_item to (test(current_object)) 1              - x pos (not v efficient), reshuffles
 //
 // Hash indexed columns usage:
 //
@@ -841,12 +846,16 @@ end_class
 //    get matrix_index_from_value of (test(current_object)) item "1" to x_pos   
 //    get matrix_indextable_from_value of (test(current_object)) item "1" to tmpStr 
 //    get matrix_hash_from_value of (test(current_object)) item "1" to tmpInt   
+//	  get item_count of (test(current_object) to tmpInt
+//    get item_width of (test(current_object) to tmpInt
 
 class matrix is an array
     procedure construct_object integer argc
         object mTokens is a StringTokenizer
         end_object
-    
+        object mTokens2 is a StringTokenizer
+        end_object
+        
         forward send construct_object
         property integer c_iWidth public argc
         property integer c_iHashOn
@@ -1024,6 +1033,44 @@ class matrix is an array
         end
     end_procedure
     
+    procedure matrix_append_csv string row        
+        local integer l_iMax l_iValues l_i
+        local string l_sBuf
+            
+        forward get item_count to l_iMax
+		
+		send delete_data to (mTokens2(current_object))
+		send set_string_csv to (mTokens2(current_object)) row
+		get token_count of (mTokens2(current_object)) to l_iValues
+		
+		for l_i from 0 to l_iValues     			
+			get token_value of (mTokens2(current_object)) item l_i to l_sBuf
+			indicate err false
+			set matrix_value item l_iMax item l_i to l_sBuf			
+			if (err) forward send delete_item l_iMax
+			if (err) break
+		loop
+
+    end_procedure
+    
+	procedure matrix_copy_csv string fname
+		local string l_sBuf
+		
+		if (does_exist(fname)) begin
+			direct_input channel DEFAULT_FILE_CHANNEL fname
+				while not (seqeof)
+					readln channel DEFAULT_FILE_CHANNEL l_sBuf
+					if (seqeof) break
+					if (trim(l_sBuf) <> "") begin
+						send matrix_append_csv l_sBuf
+					end
+				loop
+			close_input channel DEFAULT_FILE_CHANNEL
+		end
+		else;
+			custom_error ERROR_CODE_FILE_NOT_FOUND$ ERROR_MSG_FILE_NOT_FOUND ERROR_DETAIL_FILE_NOT_FOUND fname			
+	end_procedure    
+    
     function matrix_string integer itemx integer itemy returns string
         local string l_sBuf l_sTmp
 
@@ -1181,6 +1228,12 @@ class matrix is an array
     procedure set item_count integer newVal
         forward set item_count to newVal
     end_procedure
+    
+    function item_width returns integer
+	    local integer l_iWidth
+	    get c_iWidth to l_iWidth
+	    function_return l_iWidth
+    end_function
         
     procedure matrix_delete integer itemx integer itemy
         local string l_sBuf l_sTmp l_sOldVal
@@ -1529,39 +1582,39 @@ class rss20 is a matrix
         get c_itemCount to l_itemCount
         get c_ttl to l_iTtl
     
-        direct_output channel default_file_channel rssFileName
-            writeln channel default_file_channel '<?xml version="1.0" ?>'
-            writeln channel default_file_channel '<?xml-stylesheet type="text/xsl" href="rss.xsl" media="screen"?>'
-            write channel default_file_channel '<rss version="2.0" xmlns:dc="http:/' '/purl.org/dc/elements/1.1/" xmlns:sy="http:/'
-            write channel default_file_channel '/purl.org/rss/1.0/modules/syndication/" xmlns:admin="http:/' '/webns.net/mvcb/" xmlns:rdf="http:/'
-            writeln channel default_file_channel '/www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:content="http:/' '/purl.org/rss/1.0/modules/content/">'
+        direct_output channel DEFAULT_FILE_CHANNEL rssFileName
+            writeln channel DEFAULT_FILE_CHANNEL '<?xml version="1.0" ?>'
+            writeln channel DEFAULT_FILE_CHANNEL '<?xml-stylesheet type="text/xsl" href="rss.xsl" media="screen"?>'
+            write channel DEFAULT_FILE_CHANNEL '<rss version="2.0" xmlns:dc="http:/' '/purl.org/dc/elements/1.1/" xmlns:sy="http:/'
+            write channel DEFAULT_FILE_CHANNEL '/purl.org/rss/1.0/modules/syndication/" xmlns:admin="http:/' '/webns.net/mvcb/" xmlns:rdf="http:/'
+            writeln channel DEFAULT_FILE_CHANNEL '/www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:content="http:/' '/purl.org/rss/1.0/modules/content/">'
             
             // skipHours skipDays cloud - all currently not used
             // Write out Channel
-            writeln channel default_file_channel '       <channel>'
-            writeln channel default_file_channel '               <title>' (trim(l_rssTitle)) '</title>'
-            writeln channel default_file_channel '               <link>' (trim(l_rssLink)) '</link>'
-            writeln channel default_file_channel '               <description>' (trim(l_rssDesc)) '</description>'
-            writeln channel default_file_channel '               <language>en-gb</language>'
-            writeln channel default_file_channel '               <generator>Df32func RSS Object Generator</generator>'
-            writeln channel default_file_channel '               <copyright>Copyright ' (trim(l_rssTitle)) ' (C) ' (now("date")) '</copyright>'
-            writeln channel default_file_channel '               <lastBuildDate>' (rssdate((now("date")),(now("longtime")))) '</lastBuildDate>'
-            writeln channel default_file_channel '               <pubDate>' (rssdate((now("date")),(now("longtime")))) '</pubDate>'
+            writeln channel DEFAULT_FILE_CHANNEL '       <channel>'
+            writeln channel DEFAULT_FILE_CHANNEL '               <title>' (trim(l_rssTitle)) '</title>'
+            writeln channel DEFAULT_FILE_CHANNEL '               <link>' (trim(l_rssLink)) '</link>'
+            writeln channel DEFAULT_FILE_CHANNEL '               <description>' (trim(l_rssDesc)) '</description>'
+            writeln channel DEFAULT_FILE_CHANNEL '               <language>en-gb</language>'
+            writeln channel DEFAULT_FILE_CHANNEL '               <generator>Df32func RSS Object Generator</generator>'
+            writeln channel DEFAULT_FILE_CHANNEL '               <copyright>Copyright ' (trim(l_rssTitle)) ' (C) ' (now("date")) '</copyright>'
+            writeln channel DEFAULT_FILE_CHANNEL '               <lastBuildDate>' (rssdate((now("date")),(now("longtime")))) '</lastBuildDate>'
+            writeln channel DEFAULT_FILE_CHANNEL '               <pubDate>' (rssdate((now("date")),(now("longtime")))) '</pubDate>'
             
-            if (l_manEditor <> "") writeln channel default_file_channel '               <managingEditor>' l_manEditor '</managingEditor>'
-            if (l_webMaster <> "") writeln channel default_file_channel '               <webMaster>' l_webMaster '</webMaster>'
-            if (l_iTtl <> 0) writeln channel default_file_channel '               <ttl>' l_iTtl '</ttl>'           
+            if (l_manEditor <> "") writeln channel DEFAULT_FILE_CHANNEL '               <managingEditor>' l_manEditor '</managingEditor>'
+            if (l_webMaster <> "") writeln channel DEFAULT_FILE_CHANNEL '               <webMaster>' l_webMaster '</webMaster>'
+            if (l_iTtl <> 0) writeln channel DEFAULT_FILE_CHANNEL '               <ttl>' l_iTtl '</ttl>'           
             
             // Write out image
             if ((l_imgUrl <> "") and (l_imgx > 0) and (l_imgy > 0)) begin
-                writeln channel default_file_channel '               <image>'
-                writeln channel default_file_channel '                       <title>' (trim(l_imgTitle)) '</title>'
-                writeln channel default_file_channel '                       <url>' (trim(l_imgUrl)) '</url>'
-                writeln channel default_file_channel '                       <link>' (trim(l_imgLink)) '</link>'
-                writeln channel default_file_channel '                       <height>' l_imgx '</height>'
-                writeln channel default_file_channel '                       <width>' l_imgy '</width>'
-                writeln channel default_file_channel '                       <description>' (trim(l_rssDesc)) '</description>'
-                writeln channel default_file_channel '               </image>'
+                writeln channel DEFAULT_FILE_CHANNEL '               <image>'
+                writeln channel DEFAULT_FILE_CHANNEL '                       <title>' (trim(l_imgTitle)) '</title>'
+                writeln channel DEFAULT_FILE_CHANNEL '                       <url>' (trim(l_imgUrl)) '</url>'
+                writeln channel DEFAULT_FILE_CHANNEL '                       <link>' (trim(l_imgLink)) '</link>'
+                writeln channel DEFAULT_FILE_CHANNEL '                       <height>' l_imgx '</height>'
+                writeln channel DEFAULT_FILE_CHANNEL '                       <width>' l_imgy '</width>'
+                writeln channel DEFAULT_FILE_CHANNEL '                       <description>' (trim(l_rssDesc)) '</description>'
+                writeln channel DEFAULT_FILE_CHANNEL '               </image>'
             end
             
             // Write out items
@@ -1580,10 +1633,10 @@ class rss20 is a matrix
                 move (replaces('<',l_itemDesc,"&lt;")) to l_itemDesc
                 move (replaces('>',l_itemDesc,"&gt;")) to l_itemDesc
                 
-                writeln channel default_file_channel '               <item>'
-                writeln channel default_file_channel '                      <title>' l_itemTitle '</title>'
-                writeln channel default_file_channel '                      <link>' l_itemLink '</link>'
-                writeln channel default_file_channel '                      <description>' l_itemDesc '</description>'
+                writeln channel DEFAULT_FILE_CHANNEL '               <item>'
+                writeln channel DEFAULT_FILE_CHANNEL '                      <title>' l_itemTitle '</title>'
+                writeln channel DEFAULT_FILE_CHANNEL '                      <link>' l_itemLink '</link>'
+                writeln channel DEFAULT_FILE_CHANNEL '                      <description>' l_itemDesc '</description>'
                 
                 if (l_itemGuID = "") begin
                 move 0 to l_iConflict
@@ -1595,17 +1648,17 @@ class rss20 is a matrix
                 end
                 if (l_itemGuID <> "") append l_itemLink "#" l_itemGuID
                 
-                writeln channel default_file_channel '                      <guid isPermaLink="false">' l_itemLink '</guid>'
-                if ((l_pubDate = "") or (l_pubDate = "NOW")) writeln channel default_file_channel '                      <pubDate>' (rssdate((now("date")),(now("longtime")))) '</pubDate>'
-                else writeln channel default_file_channel '                      <pubDate>' l_pubDate '</pubDate>'
-                writeln channel default_file_channel '                      <category>' l_itemCat '</category>'
-                writeln channel default_file_channel '               </item>'          
+                writeln channel DEFAULT_FILE_CHANNEL '                      <guid isPermaLink="false">' l_itemLink '</guid>'
+                if ((l_pubDate = "") or (l_pubDate = "NOW")) writeln channel DEFAULT_FILE_CHANNEL '                      <pubDate>' (rssdate((now("date")),(now("longtime")))) '</pubDate>'
+                else writeln channel DEFAULT_FILE_CHANNEL '                      <pubDate>' l_pubDate '</pubDate>'
+                writeln channel DEFAULT_FILE_CHANNEL '                      <category>' l_itemCat '</category>'
+                writeln channel DEFAULT_FILE_CHANNEL '               </item>'          
             loop
             
             // Write out file/channel close
-            writeln channel default_file_channel '       </channel>'
-            writeln channel default_file_channel '</rss>'  
-        close_output channel default_file_channel
+            writeln channel DEFAULT_FILE_CHANNEL '       </channel>'
+            writeln channel DEFAULT_FILE_CHANNEL '</rss>'  
+        close_output channel DEFAULT_FILE_CHANNEL
         
     end_procedure        
     
@@ -1674,13 +1727,13 @@ class filelist is a matrix
         set c_filelistDirectory to filelistDirectory
         set c_filelistName to filelistName
         
-        direct_input channel default_file_channel (filelistDirectory+filelistName)
+        direct_input channel DEFAULT_FILE_CHANNEL (filelistDirectory+filelistName)
             read_block l_sHead 256          
             while not (seqeof)          
                 //Block of 128 split 41\33\54
-                read_block channel default_file_channel l_sRootName 41
-                read_block channel default_file_channel l_sUserDisplayName 33
-                read_block channel default_file_channel l_sFileName 54
+                read_block channel DEFAULT_FILE_CHANNEL l_sRootName 41
+                read_block channel DEFAULT_FILE_CHANNEL l_sUserDisplayName 33
+                read_block channel DEFAULT_FILE_CHANNEL l_sFileName 54
 
                 move filelistDirectory to l_sUrn
                 append l_sUrn (trim(cstring(l_sFileName))) ".FD"
@@ -1698,7 +1751,7 @@ class filelist is a matrix
                     increment l_iFileNumber
                 end
             loop        
-        close_input channel default_file_channel
+        close_input channel DEFAULT_FILE_CHANNEL
     
         set c_itemCount to l_iFileNumber
     end_procedure

@@ -1,14 +1,17 @@
-df32func.inc last compiled on 09/04/2009 at 21:45:13.05 
+df32func.inc last compiled on 25/09/2015 at 14:46:00.74 
 df32func DLL functions: 
-tcpcomm.h:external_function ClientSocket "ClientSocket" df32func.dll dword port string host returns integer
-tcpcomm.h:external_function ServerSocket "ServerSocket" df32func.dll dword port returns integer
-tcpcomm.h:external_function AcceptClient "AcceptClient" df32func.dll returns integer
-tcpcomm.h:external_function Send "Send" df32func.dll dword socket string data returns integer
-tcpcomm.h:external_function Receive "Receive" df32func.dll dword socket pointer dataOut returns integer
-tcpcomm.h:external_function CloseConnection "CloseConnection" df32func.dll dword socket returns integer
-tcpcomm.h:external_function PseudoRand "PseudoRand" df32func.dll dword w returns integer
-tcpcomm.h:external_function RdtscRand "RdtscRand" df32func.dll returns integer
-win32.h:external_function GetDateFormat "GetDateFormatA" kernel32.dll dword LCID dword dwFlags pointer lpsSystemTime pointer lpFormat pointer lpDateStr integer cchDate returns integer
+df32func.h:external_function ClientSocket "ClientSocket" df32func.dll dword port string host returns integer
+df32func.h:external_function ServerSocket "ServerSocket" df32func.dll dword port returns integer
+df32func.h:external_function AcceptClient "AcceptClient" df32func.dll returns integer
+df32func.h:external_function Send "Send" df32func.dll dword socket string data returns integer
+df32func.h:external_function Receive "Receive" df32func.dll dword socket pointer dataOut returns integer
+df32func.h:external_function CloseConnection "CloseConnection" df32func.dll dword socket returns integer
+df32func.h:external_function PseudoRand "PseudoRand" df32func.dll dword w returns integer
+df32func.h:external_function RdtscRand "RdtscRand" df32func.dll returns integer
+df32func.h:external_function GetTzi "GetTzi" df32func.dll pointer lpTimeZone pointer lpResult returns integer
+df32func.h:external_function RegexpMatch "RegexpMatch" df32func.dll pointer str pointer pattern pointer flags integer errors returns integer
+df32func.h:external_function RegexpMatches "RegexpMatches" df32func.dll pointer str pointer pattern pointer flags pointer out pointer out_len integer errors returns integer
+df32func.h:external_function RegexpReplace "RegexpReplace" df32func.dll pointer str pointer pattern pointer replacement pointer flags pointer out pointer out_len integer errors returns integerwin32.h:external_function GetDateFormat "GetDateFormatA" kernel32.dll dword LCID dword dwFlags pointer lpsSystemTime pointer lpFormat pointer lpDateStr integer cchDate returns integer
 win32.h:external_function GetTimeFormat "GetTimeFormatA" kernel32.dll dword LCID dword dwFlags pointer lpsSystemTime pointer lpFormat pointer lpTimeStr integer cchTime returns integer
 win32.h:external_function GetFileTime "GetFileTime" kernel32.dll handle hFileHandle pointer lpCreationTime pointer lpLastAccessTime pointer lpLastWriteTime returns integer
 win32.h:external_function FileTimeToSystemTime "FileTimeToSystemTime" kernel32.dll pointer lpFileTime Pointer lpSystemTime returns integer
@@ -53,6 +56,8 @@ win32.h:external_function CopyMemory "RtlMoveMemory" kernel32.dll pointer pDst p
 win32.h:external_function EnumProcesses "EnumProcesses" psapi.dll pointer lpidProcess integer cb pointer cbNeeded returns integer
 win32.h:external_function EnumProcessModules "EnumProcessModules" psapi.dll  handle hProcess pointer lphModule integer cb integer cbNeeded returns integer
 win32.h:external_function WideCharToMultiByte "WideCharToMultiByte" kernel32.dll integer cp dword dwF pointer lpWCS integer cchWC pointer lpMBS integer cchMB string dC string uDC returns integer
+win32.h:external_function CharToOem "CharToOemA" user32.dll pointer lpszSrc pointer lpszDst returns integer
+win32.h:external_function OemToChar "OemToCharA" user32.dll pointer lpszSrc pointer lpszDst returns integer
 win32.h:external_function GetSystemTime "GetSystemTime" kernel32.dll Pointer lpGST returns VOID_TYPE
 win32.h:external_function GetTickCount "GetTickCount" kernel32.dll returns dWord
 win32.h:external_function32 CoCreateGuid "CoCreateGuid" ole32.dll pointer pGUIDStructure returns word
@@ -87,7 +92,6 @@ win32.h:external_function CryptStringToBinary "CryptStringToBinaryA" crypt32.dll
 win32.h:external_function GetVersionEx "GetVersionExA" kernel32.dll pointer lpVersionInfo returns integer
 win32.h:external_function GetSystemTime "GetSystemTime" kernel32.dll pointer lpSystemTime returns integer
 win32.h:external_function GetTimeZoneInformation "GetTimeZoneInformation" kernel32.dll pointer lpTimeZoneInformation returns integer
-win32.h:external_function GetTzi "GetTzi" timezone.dll pointer lpTimeZone pointer lpResult returns integer
 df32func functions: 
 console.inc:function set_mode global integer argv returns integer
 console.inc:function screen_display global string argv returns integer
@@ -133,6 +137,11 @@ math.inc:function decround global number argv integer argv2 returns string
 math.inc:function rshift global integer argv integer shift_by returns integer
 math.inc:function lshift global integer argv integer shift_by returns integer
 math.inc:function ternary global string argv string argv2 string argv3 returns string
+regex.inc:function regexp_match global string str string pattern string flags returns integer
+regex.inc:function regexp_matches global string str string pattern string flags returns string
+regex.inc:function regexp_replace global string str string pattern string replacement string flags returns string
+regex.inc:function regexp_matches_count global string argv returns integer
+regex.inc:function regexp_matches_item global string argv integer argv2 returns string
 string.inc:function titlecase global string argv returns string
 string.inc:function replaceall global string argv string argv2 string argv3 returns string
 string.inc:function zeropad global string argv integer argv2 returns string
@@ -180,6 +189,8 @@ win32.inc:function file_size_bytes global string argv returns integer
 win32.inc:function to_ascii global string argv returns string
 win32.inc:function to_unicode global string argv returns string
 win32.inc:function to_utf8 global string argv returns string
+win32.inc:function ansi_to_oem global string argv returns string
+win32.inc:function oem_to_ansi global string argv returns string
 win32.inc:function get_procs global integer argv returns integer
 win32.inc:function time_data global integer argv returns string
 win32.inc:function fill_0 global integer iValue integer iSize returns string
@@ -224,4 +235,6 @@ data.inc:class UnicodeReader is an array
 data.inc:class ListDirectory is a matrix
 data.inc:class ProcessList is an array
 string.inc:class StringTokenizer is an array
+tap.inc:class TAP is an array
+tap.inc:class TAP_harness is a TAP
 win32.inc:class msAdvCrypt is an array

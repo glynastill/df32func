@@ -5,7 +5,7 @@
 //
 // This file is to be included in df32func.mk
 //
-// Copyright (c) 2006-2009, glyn@8kb.co.uk
+// Copyright (c) 2006-2015, glyn@8kb.co.uk
 // 
 // df32func/date.inc
 //-------------------------------------------------------------------------

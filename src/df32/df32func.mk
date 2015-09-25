@@ -4,7 +4,7 @@
 //
 // This is the file to be compiled by the dfcomp command
 //
-// Copyright (c) 2006-2009, glyn@8kb.co.uk
+// Copyright (c) 2006-2015, glyn@8kb.co.uk
 // 
 // df32func/df32func.mk
 //-------------------------------------------------------------------------
@@ -21,9 +21,9 @@
 // Set dataflex epoch and set date format to 4 digit years
 //-------------------------------------------------------------------------
 
-set_date_attribute date4_state to dftrue
-set_date_attribute epoch_value to 80
-set_date_attribute sysdate4_state to dftrue
+set_date_attribute date4_state 			to dftrue
+set_date_attribute epoch_value 			to 80
+set_date_attribute sysdate4_state 		to dftrue
 
 //-------------------------------------------------------------------------
 // Standard DF32 Console Mode packages 
@@ -39,9 +39,25 @@ Use DLL                                         //this package allows import of 
 // Defines used to control some compile time behaviour
 //-------------------------------------------------------------------------
 
-//Define enable_dfassert
-Define no_backslash_quote
-Define default_file_channel						for 9
+//Define ENABLE_DFASSERT
+
+Define NO_BACKSLASH_QUOTE
+
+#IFDEF DEFAULT_FILE_CHANNEL
+#ELSE
+    Define DEFAULT_FILE_CHANNEL						for 9
+#ENDIF
+
+#IFDEF MAX_DFREGEX_BUFFER
+#ELSE
+    Define MAX_DFREGEX_BUFFER						for 16384
+#ENDIF
+
+#IFDEF ERRORS_TO_STDERR
+#ELSE
+    Define ERRORS_TO_STDERR							for 0
+#ENDIF
+
 
 //-------------------------------------------------------------------------
 // Global variables used to control some runtime behaviour
@@ -72,8 +88,8 @@ indicate show_debug_lines false
 
 //Including header file win32.h
 #INCLUDE win32.h
-//Including include file tcpcom.h
-#INCLUDE tcpcomm.h
+//Including include file df32func.h
+#INCLUDE df32func.h
 //Including include file console.h
 #INCLUDE console.h
 //Including include file encode.h
@@ -84,6 +100,10 @@ indicate show_debug_lines false
 #INCLUDE macro.inc
 //Including include file math.inc
 #INCLUDE math.inc
+//Including include file tap.inc
+#INCLUDE tap.inc
+//Including include file regex.inc
+#INCLUDE regex.inc
 //Including include file win32.inc
 #INCLUDE win32.inc
 //Including include file string.inc

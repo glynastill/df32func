@@ -4,8 +4,8 @@
 //
 // This file is to be included in df32func.mk
 //
-// Copyright (c) 2006-2009, glyn@8kb.co.uk
-// 
+// Copyright (c) 2006-2015, glyn@8kb.co.uk
+//
 // df32func/errors.h
 //-------------------------------------------------------------------------
 
@@ -27,7 +27,11 @@ enum_list
     Define ERROR_CODE_INVALID_TIMESTAMP$
     Define ERROR_CODE_INVALID_POSIX_NUMBER$
     Define ERROR_CODE_INVALID_SYSTEM_TIMEZONE$
+    Define ERROR_CODE_COMPARISON_OPERATOR$
     Define ERROR_CODE_INVALID_BOOLEAN$
+    Define ERROR_CODE_REGEX_BUFFER_OVERFLOW$
+    Define ERROR_CODE_REGEX_COMPILE_FAILURE$
+    Define ERROR_CODE_FILE_NOT_FOUND$
 end_enum_list
 
 //-------------------------------------------------------------------------
@@ -51,6 +55,10 @@ end_enum_list
 #REPLACE ERROR_MSG_INVALID_POSIX_NUMBER     "Invalid posix number: ??"
 #REPLACE ERROR_MSG_INVALID_SYSTEM_TIMEZONE  "Invalid system timezone"
 #REPLACE ERROR_MSG_INVALID_BOOLEAN          "Value does not evaluate to boolean"
+#REPLACE ERROR_MSG_COMPARISON_OPERATOR      "Not a valid operator: ??"
+#REPLACE ERROR_MSG_REGEX_BUFFER_OVERFLOW	"Regex output buffer too small: ??"
+#REPLACE ERROR_MSG_REGEX_COMPILE_FAILURE    "Regex compilation failed"
+#REPLACE ERROR_MSG_FILE_NOT_FOUND           "File not found or permission denied"
 
 //-------------------------------------------------------------------------
 // Error message detail
@@ -61,3 +69,4 @@ end_enum_list
 #REPLACE ERROR_DETAIL_GETLASTERROR          "GetLastError = ??"
 #REPLACE ERROR_DETAIL_INVALID_TIMESTAMP     "Format: ??"
 #REPLACE ERROR_DETAIL_INVALID_BOOLEAN       "Value ?? != true/false"
+#REPLACE ERROR_DETAIL_FILE_NOT_FOUND		"File: ??"

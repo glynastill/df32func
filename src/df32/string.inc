@@ -5,7 +5,7 @@
 //
 // This file is to be included in df32func.mk
 //
-// Copyright (c) 2006-2009, glyn@8kb.co.uk
+// Copyright (c) 2006-2015, glyn@8kb.co.uk
 // 
 // df32func/string.inc
 //-------------------------------------------------------------------------
@@ -87,7 +87,7 @@ end_function
 
 // Standard escaping via C standard.
 //
-// For PostgreSQL when no_backslash_quote is defined single quotes are 
+// For PostgreSQL when NO_BACKSLASH_QUOTE is defined single quotes are 
 // escaped per SQL standard by doubling '' rather than \' because in 
 // some encodings multibyte characters have a last byte numerically 
 // equivalent to ASCII escaped by backslash "\".
@@ -97,7 +97,7 @@ function addslashes global string argv returns string
     local string l_sReturn
     
     move (replaces("\",argv,"\\")) to l_sReturn
-    #IFDEF no_backslash_quote
+    #IFDEF NO_BACKSLASH_QUOTE
         move (replaces("'",l_sReturn,"''")) to l_sReturn
     #ELSE
         move (replaces("'",l_sReturn,"\'")) to l_sReturn
@@ -249,9 +249,9 @@ function msxsl global string engine string source string stylesheet string param
 
             if (outfile = "") begin
                 move (file_size_bytes(l_sFile)) to l_iFileSize
-                direct_input channel default_file_channel l_sFile
-                    read_block channel default_file_channel l_sReturn l_iFileSize
-                close_input channel default_file_channel
+                direct_input channel DEFAULT_FILE_CHANNEL l_sFile
+                    read_block channel DEFAULT_FILE_CHANNEL l_sReturn l_iFileSize
+                close_input channel DEFAULT_FILE_CHANNEL
                 move (fileopp("delete",l_sFile,"")) to l_iThrow
             end
             else move outfile to l_sReturn
@@ -268,8 +268,11 @@ end_function
 // String tokenizer class
 //
 // Send message methods:
-//    set_string
-//
+//    set_string <string> <delimiter>	- Send the string to be tokenized and the delimiter to split on
+//    set_string_csv <string>		    - Send a CSV string to be tokenized. As per general CSV data:
+//											* Items containting commas to be enclosed in double quotes:  '"'
+//											* Double quotes in quotes to be escaped with a backslash:    '\'
+//											
 // Set methods:
 //    token_value 
 //
@@ -329,6 +332,46 @@ class StringTokenizer is an array
         set c_iTokenOn to 0
         set c_iTokens to l_iTokens
     end_procedure
+    
+	procedure set_string_csv string argv	
+		local integer l_i l_iQuot l_iTokens
+		local string l_sChar l_sLast l_sNext l_sBuf
+		
+		move -1 to l_iTokens
+		move 0 to l_iQuot
+		move "" to l_sLast
+		
+		for l_i from 0 to (length(argv))
+			move (mid(argv,1,l_i)) to l_sChar
+			move (mid(argv,1,l_i+1)) to l_sNext
+			move (mid(argv,1,l_i-1)) to l_sLast		
+			
+			if ((l_iQuot) and (l_sChar = '\') and (l_sNext = '"')) break begin
+			
+			if ((l_sChar = '"') and (l_sLast <> '\')) begin
+				if (l_iQuot) move 0 to l_iQuot
+				else move 1 to l_iQuot
+			end
+			if ((l_sChar = '"') and (l_sLast <> '\')) break begin		
+			
+			if ((l_sChar = ',') and not (l_iQuot)) begin
+				//fwd to Array
+				increment l_iTokens
+				forward set array_value item l_iTokens to l_sBuf
+				move "" to l_sBuf
+			end
+			if ((l_sChar = ',') and not (l_iQuot)) break begin
+			
+			append l_sBuf l_sChar
+		loop
+		
+		//fwd to Array
+		increment l_iTokens		
+		forward set array_value item l_iTokens to l_sBuf
+
+		set c_iTokenOn to 0		
+        set c_iTokens to l_iTokens
+	end_procedure    
 
     procedure set token_value integer itemx string val
         forward set array_value item itemx to val

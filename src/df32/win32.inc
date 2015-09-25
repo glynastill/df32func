@@ -5,7 +5,7 @@
 //
 // This file is to be included when using Win32 capabilities in df32func.mk
 //
-// Copyright (c) 2006-2009, glyn@8kb.co.uk
+// Copyright (c) 2006-2015, glyn@8kb.co.uk
 // 
 // df32func/win32.inc
 //-------------------------------------------------------------------------
@@ -681,15 +681,15 @@ function to_ascii global string argv returns string
     move (trim(argv)) to l_sUnicode
     
     if (l_sUnicode <> "") begin
-        zerostring 100 to l_sAscii
+        zerostring (length(l_sUnicode)) to l_sAscii
         getAddress of l_sAscii to l_pAscii
         getAddress of l_sUnicode to l_pUnicode
         
-        // set the length of cchWideChar to -1 and function assumes null termination and calculates lenght itsself
+        // set the length of cchWideChar to -1 and function assumes null termination and calculates length itsself
         move (WideCharToMultiByte(CP_OEMCP,0,l_pUnicode,-1,0,0,0,0)) to l_iCharsNeeded              
         move (WideCharToMultiByte(CP_OEMCP,0,l_pUnicode,-1,l_pAscii,l_iCharsNeeded,0,0)) to l_iThrow
     end
-    function_return l_sAscii
+    function_return (cstring(l_sAscii))
 end_function
 
 // Attempt to convert a string from ASCII to unicode via MultiByteToWideChar
@@ -700,15 +700,15 @@ function to_unicode global string argv returns string
     move (trim(argv)) to l_sAscii
     
     if (l_sAscii <> "") begin
-        zerostring 100 to l_sUnicode
+        zerostring (length(l_sAscii)*2) to l_sUnicode
         getAddress of l_sUnicode to l_pUnicode
         getAddress of l_sAscii to l_pAscii
         
-        // set the length of cchWideChar to -1 and function assumes null termination and calculates lenght itsself
+        // set the length of cchWideChar to -1 and function assumes null termination and calculates length itsself
         move (MultiByteToWideChar(CP_ACP,0,l_pAscii,-1,0,0,0,0)) to l_iCharsNeeded              
         move (MultiByteToWideChar(CP_ACP,0,l_pAscii,-1,l_pUnicode,l_iCharsNeeded,0,0)) to l_iThrow
     end
-    function_return l_sUnicode  
+    function_return (cstring(l_sUnicode))  
 end_function
 
 // Attempt to convert a string from ascii to UTF8 via WideCharToMultiByte
@@ -719,7 +719,7 @@ function to_utf8 global string argv returns string
     move (trim(argv)) to l_sUnicode
     
     if (l_sUnicode <> "") begin
-        zerostring 100 to l_sUTF8
+        zerostring (length(l_sUnicode)) to l_sUTF8
         getAddress of l_sUTF8 to l_pUTF8
         getAddress of l_sUnicode to l_pUnicode
         
@@ -728,7 +728,47 @@ function to_utf8 global string argv returns string
         move (WideCharToMultiByte(CP_UTF8,0,l_pUTF8,-1,l_pUnicode,l_iCharsNeeded,0,0)) to l_iThrow
     end
     
-    function_return l_sUTF8
+    function_return (cstring(l_sUTF8))
+end_function
+
+// https://msdn.microsoft.com/en-us/library/windows/desktop/ms647473%28v=vs.85%29.aspx
+// Note security considerations, as this function doesn't enforce string lengths
+function ansi_to_oem global string argv returns string
+    local string l_sOem l_sAnsi
+    local pointer l_pOem l_pAnsi
+    local integer l_iResult
+    
+    if (length(argv) <> 0) begin
+        move argv to l_sAnsi
+        getaddress of l_sAnsi to l_pAnsi
+        zerostring (length(l_sAnsi)+1) to l_sOem
+        getaddress of l_sOem to l_pOem
+        move (CharToOem(l_pAnsi, l_pOem)) to l_iResult
+    end
+    else;
+        move argv to l_sOem
+        
+    function_return (cstring(l_sOem))
+end_function
+
+// https://msdn.microsoft.com/en-us/library/windows/desktop/ms647493%28v=vs.85%29.aspx
+// Note security considerations, as this function doesn't enforce string lengths
+function oem_to_ansi global string argv returns string
+    local string l_sOem l_sAnsi
+    local pointer l_pOem l_pAnsi
+    local integer l_iResult
+    
+    if (length(argv) <> 0) begin
+        move argv to l_sOem
+        getaddress of l_sOem to l_pOem
+        zerostring (length(l_sOem)+1) to l_sAnsi
+        getaddress of l_sAnsi to l_pAnsi
+        move (CharToOem(l_pOem, l_pAnsi)) to l_iResult
+    end
+    else;
+        move argv to l_sAnsi
+        
+    function_return (cstring(l_sAnsi))
 end_function
 
 // Get running processes on the system

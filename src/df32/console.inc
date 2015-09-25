@@ -5,7 +5,7 @@
 //
 // This file is to be included in df32func.mk
 //
-// Copyright (c) 2006-2009, glyn@8kb.co.uk
+// Copyright (c) 2006-2015, glyn@8kb.co.uk
 // 
 // df32func/console.inc
 //-------------------------------------------------------------------------
@@ -51,9 +51,9 @@ function screen_display global string argv returns integer
     move 0 to l_iTotalLines
     move 0 to l_iTotalWidth
 
-    direct_input channel default_file_channel argv   
+    direct_input channel DEFAULT_FILE_CHANNEL argv   
     while not (seqeof)
-        readln channel default_file_channel l_sBuf
+        readln channel DEFAULT_FILE_CHANNEL l_sBuf
         move (rtrim(l_sBuf)) to l_sbuf
         move (replaces("{YELLOW}",l_sBuf,"")) to l_sBuf
         move (replaces("{WHITE}",l_sBuf,"")) to l_sBuf
@@ -66,15 +66,15 @@ function screen_display global string argv returns integer
         if (length(l_sBuf) > l_iTotalWidth) move ((length(l_sBuf))+1) to l_iTotalWidth
         increment l_iTotalLines
     loop
-    close_input channel default_file_channel 
+    close_input channel DEFAULT_FILE_CHANNEL 
 
     while not (key.escape)
-        direct_input channel default_file_channel argv
+        direct_input channel DEFAULT_FILE_CHANNEL argv
             for l_i from 1 to l_iLineAt
-                readln channel default_file_channel 
+                readln channel DEFAULT_FILE_CHANNEL 
             loop
             for l_i from 1 to 22
-                readln channel default_file_channel l_sBuf
+                readln channel DEFAULT_FILE_CHANNEL l_sBuf
                 gotoxy (l_i-1) 0
 
                     if (uppercase(l_sBuf) contains "{YELLOW}") begin
@@ -113,7 +113,7 @@ function screen_display global string argv returns integer
                 show (pad(mid(l_sBuf,80,l_iWidthAt),80))
                 screenmode 1
             loop
-        close_input channel default_file_channel        
+        close_input channel DEFAULT_FILE_CHANNEL        
     
         move "lines " to l_sTmp
         append l_sTmp (l_iLineAt+1) "-" (l_iLineAt+22) " of " (l_iTotalLines)

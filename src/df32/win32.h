@@ -6,7 +6,7 @@
 //
 // This file is to be included when using Win32 capabilities in df32func.mk
 //
-// Copyright (c) 2006-2009, glyn@8kb.co.uk
+// Copyright (c) 2006-2015, glyn@8kb.co.uk
 // 
 // df32func/win32.h
 //-------------------------------------------------------------------------
@@ -62,6 +62,8 @@ external_function CopyMemory "RtlMoveMemory" kernel32.dll pointer pDst pointer p
 external_function EnumProcesses "EnumProcesses" psapi.dll pointer lpidProcess integer cb pointer cbNeeded returns integer
 external_function EnumProcessModules "EnumProcessModules" psapi.dll  handle hProcess pointer lphModule integer cb integer cbNeeded returns integer
 external_function WideCharToMultiByte "WideCharToMultiByte" kernel32.dll integer cp dword dwF pointer lpWCS integer cchWC pointer lpMBS integer cchMB string dC string uDC returns integer
+external_function CharToOem "CharToOemA" user32.dll pointer lpszSrc pointer lpszDst returns integer
+external_function OemToChar "OemToCharA" user32.dll pointer lpszSrc pointer lpszDst returns integer
 external_function GetSystemTime "GetSystemTime" kernel32.dll Pointer lpGST returns VOID_TYPE
 external_function GetTickCount "GetTickCount" kernel32.dll returns dWord
 external_function32 CoCreateGuid "CoCreateGuid" ole32.dll pointer pGUIDStructure returns word
@@ -96,7 +98,6 @@ external_function CryptStringToBinary "CryptStringToBinaryA" crypt32.dll pointer
 external_function GetVersionEx "GetVersionExA" kernel32.dll pointer lpVersionInfo returns integer
 external_function GetSystemTime "GetSystemTime" kernel32.dll pointer lpSystemTime returns integer
 external_function GetTimeZoneInformation "GetTimeZoneInformation" kernel32.dll pointer lpTimeZoneInformation returns integer
-external_function GetTzi "GetTzi" timezone.dll pointer lpTimeZone pointer lpResult returns integer
 
 //-------------------------------------------------------------------------
 // Constants
