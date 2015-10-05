@@ -31,7 +31,7 @@ static char * quote_output(char *str) {
     /* Check for characters that need quoting */
     for (ptr = str; *ptr; ptr++) {
         char        ch = *ptr;
-        if (ch == '\"' || ch =='\\' || ch == '\{' || ch == ',') {
+        if (ch == '"' || ch =='\\' || ch == '{' || ch == ',') {
             do_quote = 1;
             break;
         }
@@ -118,11 +118,11 @@ static int compile_regex(regex_t *re, const char *pattern, const char *flags, in
 
     status = regcomp(re, pattern, cflags);
     if (status != REG_NOERROR) {
-		if (errors == 1) {
-	        char error_message[MAX_ERROR_MSG];
-	        regerror (status, re, error_message, MAX_ERROR_MSG);
-	        fprintf (stderr, "Regex error compiling '%s': %s\n", pattern, error_message);
-		}
+        if (errors == 1) {
+            char error_message[MAX_ERROR_MSG];
+            regerror (status, re, error_message, MAX_ERROR_MSG);
+            fprintf (stderr, "Regex error compiling '%s': %s\n", pattern, error_message);
+        }
     }
     return status;
 }
@@ -300,7 +300,7 @@ int regexp_match(const char *str, const char *pattern, const char *flags, int er
         if (!result) /* match */
             return 1;
         else /* no match */
-        	return 0;
+            return 0;
     }
     else /* error condition, but still: no match */
         return 0;

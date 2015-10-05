@@ -206,7 +206,7 @@ function sanitize_str global string l_sInput string l_sLevel returns string
     function_return l_sReturn   
 end_function
 
-// Return none blank of two strings
+// Return one blank of two strings
 function nbstring global string argv string argv2 returns string
     if (argv <> "") function_return argv
     else if (argv2 <> "") function_return argv2
@@ -261,6 +261,90 @@ function msxsl global string engine string source string stylesheet string param
     function_return l_sReturn
 end_function
 
+// Check if a string looks like a valid dataflex number
+//True
+// showln (is_number("99999999999999.99999999")) (is_number("-99999999999999.99999999"))
+// showln (is_number("99999999999999.0")) (is_number("0")) (is_number("-0")) (is_number("100"))
+//False
+// showln (is_number("99999999999999.999999999")) (is_number("-999999999999999.99999999"))
+// showln (is_number("999999999999999.99999999")) (is_number("1-0")) (is_number(".0D"))
+// showln (is_number("")) (is_number("-")) (is_number("100A")) (is_number("A100"))
+function is_number global string argv returns integer
+    local integer l_iChar l_iDec l_iNum l_iLen l_i l_iNeg
+        
+    move 0 to l_iNum    
+    move 0 to l_iDec
+    
+    // Is the value negative
+    if (ascii(mid(argv,1,1)) = 45);
+        move 1 to l_iNeg
+    else;
+        move 0 to l_iNeg
+    
+    move (length(argv)) to l_iLen
+    
+    // Check basic length conforms to number
+    if ((l_iLen-L_iNeg = 0) or (l_iLen-l_iNeg > 23)) function_return 0
+    
+    //Check for non numerics
+    for l_i from (1+l_iNeg) to l_iLen
+        move (ascii(mid(argv,1,l_i))) to l_iChar
+        if ((l_iChar = 46) and ((l_iDec = 1) or (l_i > 15+l_iNeg))) break
+        if not ((l_iChar >= 48) and (l_iChar <= 57) or (l_iChar = 46)) break                        
+        if (l_iChar = 46);
+            move 1 to l_iDec
+        increment l_iNum
+    loop
+    
+    function_return ((l_iNum+l_iNeg) = l_iLen)
+end_function
+
+
+// Check if a string looks like a valid dataflex integer
+//True
+// showln (is_integer("2147483647")) (is_integer("2147483638")) 
+// showln (is_integer("-2147483647")) (is_integer("-2147483648")) 
+// showln (is_integer("0")) (is_integer("-0"))
+//False
+// showln (is_integer("214748364 ")) (is_integer("2147483648")) (is_integer("2947483647"))
+// showln (is_integer("-2147483649")) (is_integer("21474836478")) (is_integer("21474836470"))
+// showln (is_integer("-21474836470")) (is_integer("214748364A")) (is_integer("-A"))
+// showln (is_integer("-214748364A")) (is_integer("-")) (is_integer("-21474B364P"))
+function is_integer global string argv returns integer
+    local integer l_iChar l_iInt l_iLen l_i l_iNeg 
+    
+    move 0 to l_iInt
+    move (length(argv)) to l_iLen
+    
+    //Is the value negative
+    if (ascii(mid(argv,1,1)) = 45);
+        move 1 to l_iNeg
+    else;
+        move 0 to l_iNeg    
+    
+    // Check basic length conforms to integer
+    if ((l_iLen-L_iNeg = 0) or (l_iLen-l_iNeg > 10)) function_return 0  
+    
+    //Check for non numerics
+    for l_i from (1+l_iNeg) to l_iLen
+        move (ascii(mid(argv,1,l_i))) to l_iChar
+        if not ((l_iChar >= 48) and (l_iChar <= 57)) break
+        increment l_iInt
+    loop
+
+    //Check for 32 bit signed integer bounds
+    if ((l_iLen-l_iNeg = 10) and ((l_iInt+l_iNeg) = l_iLen)) begin              
+        if (integer(mid(argv,9,1+l_iNeg)) > 214748364);
+            function_return 0
+        if (integer(mid(argv,9,1+l_iNeg)) = 214748364) begin        
+            if (integer(mid(argv,1,10+l_iNeg)) > 7+l_iNeg);
+                function_return 0
+        end
+    end
+        
+    function_return ((l_iInt+l_iNeg) = l_iLen)
+end_function
+
 //-------------------------------------------------------------------------
 // Classes
 //-------------------------------------------------------------------------
@@ -268,11 +352,11 @@ end_function
 // String tokenizer class
 //
 // Send message methods:
-//    set_string <string> <delimiter>	- Send the string to be tokenized and the delimiter to split on
-//    set_string_csv <string>		    - Send a CSV string to be tokenized. As per general CSV data:
-//											* Items containting commas to be enclosed in double quotes:  '"'
-//											* Double quotes in quotes to be escaped with a backslash:    '\'
-//											
+//    set_string <string> <delimiter>   - Send the string to be tokenized and the delimiter to split on
+//    set_string_csv <string>           - Send a CSV string to be tokenized. As per general CSV data:
+//                                          * Items containting commas to be enclosed in double quotes:  '"'
+//                                          * Double quotes in quotes to be escaped with a backslash:    '\'
+//                                          
 // Set methods:
 //    token_value 
 //
@@ -333,45 +417,46 @@ class StringTokenizer is an array
         set c_iTokens to l_iTokens
     end_procedure
     
-	procedure set_string_csv string argv	
-		local integer l_i l_iQuot l_iTokens
-		local string l_sChar l_sLast l_sNext l_sBuf
-		
-		move -1 to l_iTokens
-		move 0 to l_iQuot
-		move "" to l_sLast
-		
-		for l_i from 0 to (length(argv))
-			move (mid(argv,1,l_i)) to l_sChar
-			move (mid(argv,1,l_i+1)) to l_sNext
-			move (mid(argv,1,l_i-1)) to l_sLast		
-			
-			if ((l_iQuot) and (l_sChar = '\') and (l_sNext = '"')) break begin
-			
-			if ((l_sChar = '"') and (l_sLast <> '\')) begin
-				if (l_iQuot) move 0 to l_iQuot
-				else move 1 to l_iQuot
-			end
-			if ((l_sChar = '"') and (l_sLast <> '\')) break begin		
-			
-			if ((l_sChar = ',') and not (l_iQuot)) begin
-				//fwd to Array
-				increment l_iTokens
-				forward set array_value item l_iTokens to l_sBuf
-				move "" to l_sBuf
-			end
-			if ((l_sChar = ',') and not (l_iQuot)) break begin
-			
-			append l_sBuf l_sChar
-		loop
-		
-		//fwd to Array
-		increment l_iTokens		
-		forward set array_value item l_iTokens to l_sBuf
+    procedure set_string_csv string argv    
+        local integer l_i l_iQuot l_iTokens
+        local string l_sChar l_sLast l_sNext l_sBuf
+        
+        move -1 to l_iTokens
+        move 0 to l_iQuot
+        move "" to l_sLast
+        
+        for l_i from 0 to (length(argv))
+            move (mid(argv,1,l_i)) to l_sChar
+            move (mid(argv,1,l_i+1)) to l_sNext
+            move (mid(argv,1,l_i-1)) to l_sLast     
+            
+            if ((l_iQuot) and (l_sChar = '\') and (l_sNext = '"')) break begin
+            if ((l_iQuot) and (l_sChar = '\') and (l_sNext = '\')) break begin
+            
+            if ((l_sChar = '"') and (l_sLast <> '\')) begin
+                if (l_iQuot) move 0 to l_iQuot
+                else move 1 to l_iQuot
+            end
+            if ((l_sChar = '"') and (l_sLast <> '\')) break begin       
+            
+            if ((l_sChar = ',') and not (l_iQuot)) begin
+                //fwd to Array
+                increment l_iTokens
+                forward set array_value item l_iTokens to l_sBuf
+                move "" to l_sBuf
+            end
+            if ((l_sChar = ',') and not (l_iQuot)) break begin
+            
+            append l_sBuf l_sChar
+        loop
+        
+        //fwd to Array
+        increment l_iTokens     
+        forward set array_value item l_iTokens to l_sBuf
 
-		set c_iTokenOn to 0		
+        set c_iTokenOn to 0     
         set c_iTokens to l_iTokens
-	end_procedure    
+    end_procedure    
 
     procedure set token_value integer itemx string val
         forward set array_value item itemx to val

@@ -1,4 +1,4 @@
-df32func.inc last compiled on 25/09/2015 at 14:46:00.74 
+df32func.inc last compiled on 05/10/2015 at 15:44:49.94 
 df32func DLL functions: 
 df32func.h:external_function ClientSocket "ClientSocket" df32func.dll dword port string host returns integer
 df32func.h:external_function ServerSocket "ServerSocket" df32func.dll dword port returns integer
@@ -142,6 +142,7 @@ regex.inc:function regexp_matches global string str string pattern string flags 
 regex.inc:function regexp_replace global string str string pattern string replacement string flags returns string
 regex.inc:function regexp_matches_count global string argv returns integer
 regex.inc:function regexp_matches_item global string argv integer argv2 returns string
+regex.inc:function regexp_matches_item_stripped global string argv integer argv2 returns string
 string.inc:function titlecase global string argv returns string
 string.inc:function replaceall global string argv string argv2 string argv3 returns string
 string.inc:function zeropad global string argv integer argv2 returns string
@@ -154,6 +155,8 @@ string.inc:function sanitize_num global number l_nInput returns integer
 string.inc:function sanitize_str global string l_sInput string l_sLevel returns string
 string.inc:function nbstring global string argv string argv2 returns string
 string.inc:function msxsl global string engine string source string stylesheet string params string outfile returns string
+string.inc:function is_number global string argv returns integer
+string.inc:function is_integer global string argv returns integer
 tstamp.inc:function timestemp_to_posix global string inTs returns number
 tstamp.inc:function posix_to_timestamp global number argv returns string
 tstamp.inc:function timestamp_adjust global string inTs number inMSeconds returns string

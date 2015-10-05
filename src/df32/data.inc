@@ -790,7 +790,10 @@ end_class
 //
 // Send message methods:
 //    delete_data                   - Clear the matrix
-//    matrix_sort                   - Y pos to sort on
+//    [obsolete] matrix_sort        - Y pos to sort on, ASC OR DESC
+//    sort_items                    - Y pos to sort on, ASC OR DESC (auto detects)
+//    sort_items_ascii              - Y pos to sort on, ASC OR DESC (ascii)
+//    sort_items_num                - Y pos to sort on, ASC OR DESC (numeric)
 //    matrix_delete                 - X and Y pos to delete 
 //    delete_item                   - X position to delete (this reshuffles the matrix; avoid using)
 //    hash_on_column_algorithm      - Hash algorithm to use
@@ -799,8 +802,10 @@ end_class
 //    hash_is_unique                - Add a unique constraint on the hash
 //    remove_hash_is_unique         - Remove a unique constraint from the hash
 //    matrix_index_lookup_clear     - Clear the lookup buffer
-//    matrix_append_csv				- Append some data in CSV format to the array E.g. ('My Name,"My,\"address\""')
-//    matrix_copy_csv				- Copy csv data from sprecified file into matrix
+//    matrix_append_csv             - Append some data in CSV format to the array E.g. ('My Name,"My,\"address\""')
+//    matrix_copy_csv_in            - Copy csv data from specified file into matrix
+//    matrix_copy_csv_in_header     - Copy csv data with header from specified file into matrix
+//    matrix_copy_csv_out           - Copy csv data from matrix into specified file
 //
 // Set methods:
 //    matrix_value                  - Set a value at X, Y
@@ -817,8 +822,8 @@ end_class
 //    matrix_index_lookup_clear     - Clear the buffer for an indexed lookup
 //    matrix_index_count_from_value - Get a count of rows with a particular value
 //    matrix_index_from_value       - Get the next X pos (row) with indexed value. Returns -1 when nothing left to find.
-//    item_count					- Get count of rows in matrix
-//    item_width					- Get count of columns in matrix
+//    item_count                    - Get count of rows in matrix
+//    item_width                    - Get count of columns in matrix
 //    
 // Example usage:
 //
@@ -828,8 +833,11 @@ end_class
 //    set matrix_value of (test(current_object)) item 0 item 1 to "1"    - x then y pos to Value
 //    get matrix_value of (test(current_object)) item 0 item 1 to tmpStr - x then y pos to Value
 //    send matrix_append_csv to test ('My Name,"My,\"address\""')        - Append CSV data to the end of the matrix
-//	  send matrix_copy_csv to (test(current_object)) "f:\data.csv"		- Copy data from csv file into matrix
-//    send matrix_sort to (test(current_object)) 1               - x then y pos to sort by
+//    send matrix_copy_csv_in to (test(current_object)) "f:\data.csv"       - Copy data from csv file into matrix
+//    [obsolete] send matrix_sort to (test(current_object)) 1 ASC        - y pos to sort by, ASCENDING/DESCENDING
+//    send sort_items to (test(current_object)) 1                        - y pos to sort by, ASCENDING/DESCENDING (auto)
+//    send sort_items_ascii to (test(current_object)) 1                  - y pos to sort by, ASCENDING/DESCENDING (ascii)
+//    send sort_items_num to (test(current_object)) 1                    - y pos to sort by, ASCENDING/DESCENDING (numeric)
 //    send matrix_delete to (test(current_object)) 1 1           - x then y pos to delete 
 //    send matrix_delete_row to (test(current_object)) 1             - x essentially blanks record out, no reshuffle
 //    send delete_item to (test(current_object)) 1              - x pos (not v efficient), reshuffles
@@ -846,7 +854,7 @@ end_class
 //    get matrix_index_from_value of (test(current_object)) item "1" to x_pos   
 //    get matrix_indextable_from_value of (test(current_object)) item "1" to tmpStr 
 //    get matrix_hash_from_value of (test(current_object)) item "1" to tmpInt   
-//	  get item_count of (test(current_object) to tmpInt
+//    get item_count of (test(current_object) to tmpInt
 //    get item_width of (test(current_object) to tmpInt
 
 class matrix is an array
@@ -869,7 +877,22 @@ class matrix is an array
         set c_iLastIndexTableHash to -1
         set c_iLastIndexTablePos to -1
         set c_iEnforceUnique to 0
-    end_procedure
+    end_procedure    
+    
+    // Pull the value of a column from the string representation
+    function column_value integer itemy string row
+        local string l_sResult
+        local integer l_i
+        
+        move row to l_sResult
+        
+        for l_i from 0 to (itemy-1)
+            move (right(l_sResult,length(l_sResult)-pos(character(1),l_sResult))) to l_sResult
+        loop
+        move (left(l_sResult,pos(character(1),l_sResult)-1)) to l_sResult
+        
+        function_return l_sResult
+    end_function    
     
     procedure hash_on_column_algorithm string hashalg
         if ((hashalg = "hash_reduced_djb2") or (hashalg = "hash_reduced_sdbm") or (hashalg = "hash_reduced_lazy") or (hashalg = "hash_for_df_arrays") or (hashalg = "")) begin
@@ -914,10 +937,9 @@ class matrix is an array
                 
                 for l_i from 0 to l_iMax
                     forward get array_value item l_i to l_sBuf
-                
-                    send delete_data to (mTokens(current_object))
-                    send set_string to (mTokens(current_object)) l_sBuf (character(1))
-                    get token_value of (mTokens(current_object)) item l_iColumn to l_sTmp                                       
+
+                    get column_value item l_iColumn item l_sBuf to l_sTmp
+                    
                     get insert_hash of (mHash_table(current_object)) item l_sTmp to l_iHash
                     get string_value of (mHash_array(current_object)) item l_iHash to l_sTmp
                         
@@ -951,6 +973,8 @@ class matrix is an array
         
         if (l_iHashOn <> -1) begin          
             set c_iHashOn to -1
+            set c_iLastIndexTableHash to -1
+            set c_iLastIndexTablePos to -1
             send destroy_object to (mHash_array(current_object))
             send destroy_object to (mHash_table(current_object))
         end
@@ -1034,102 +1058,139 @@ class matrix is an array
     end_procedure
     
     procedure matrix_append_csv string row        
-        local integer l_iMax l_iValues l_i
+        local integer l_iMax l_iValues l_i l_iHashOn l_iWidth l_iCount
         local string l_sBuf
             
+        get c_iHashOn to l_iHashOn
         forward get item_count to l_iMax
-		
-		send delete_data to (mTokens2(current_object))
-		send set_string_csv to (mTokens2(current_object)) row
-		get token_count of (mTokens2(current_object)) to l_iValues
-		
-		for l_i from 0 to l_iValues     			
-			get token_value of (mTokens2(current_object)) item l_i to l_sBuf
-			indicate err false
-			set matrix_value item l_iMax item l_i to l_sBuf			
-			if (err) forward send delete_item l_iMax
-			if (err) break
-		loop
+        
+        if ((l_iHashOn <> -1) or (row contains '"')) begin 
+            send delete_data to (mTokens2(current_object))
+            send set_string_csv to (mTokens2(current_object)) row
+            get token_count of (mTokens2(current_object)) to l_iValues
+        
+            for l_i from 0 to l_iValues                 
+                get token_value of (mTokens2(current_object)) item l_i to l_sBuf
+                indicate err false
+                set matrix_value item l_iMax item l_i to l_sBuf         
+                if (err) forward send delete_item l_iMax
+                if (err) break
+            loop
+        end
+        else begin
+            get c_iWidth to l_iWidth 
+            move 0 to l_iCount
+            forward set array_value item l_iMax to (replaces(',', row, character(1)))
+            for l_i from (pos(',', row)) to (length(row))
+                if (mid(row,1,l_i) = ',') increment l_iCount
+            loop            
+            if (l_iCount > l_iWidth) set c_iWidth to l_iCount
+        end
 
     end_procedure
-    
-	procedure matrix_copy_csv string fname
-		local string l_sBuf
-		
-		if (does_exist(fname)) begin
-			direct_input channel DEFAULT_FILE_CHANNEL fname
-				while not (seqeof)
-					readln channel DEFAULT_FILE_CHANNEL l_sBuf
-					if (seqeof) break
-					if (trim(l_sBuf) <> "") begin
-						send matrix_append_csv l_sBuf
-					end
-				loop
-			close_input channel DEFAULT_FILE_CHANNEL
-		end
-		else;
-			custom_error ERROR_CODE_FILE_NOT_FOUND$ ERROR_MSG_FILE_NOT_FOUND ERROR_DETAIL_FILE_NOT_FOUND fname			
-	end_procedure    
-    
-    function matrix_string integer itemx integer itemy returns string
-        local string l_sBuf l_sTmp
 
-        forward get array_value item itemx to l_sBuf
+    procedure matrix_copy_csv_worker string fname integer offset
+        local string l_sBuf 
+        local integer l_i
         
-        send delete_data to (mTokens(current_object))
-        send set_string to (mTokens(current_object)) l_sBuf (character(1))
-        get token_value of (mTokens(current_object)) item itemy to l_sTmp
+        move 0 to l_i
+        if (does_exist(fname)) begin
+            direct_input channel DEFAULT_FILE_CHANNEL fname
+                while not (seqeof)
+                    readln channel DEFAULT_FILE_CHANNEL l_sBuf
+                    increment l_i
+                    if (l_i <= offset) break begin
+                    if (seqeof) break
+                    if (trim(l_sBuf) <> "") begin
+                        send matrix_append_csv l_sBuf
+                    end
+                loop
+            close_input channel DEFAULT_FILE_CHANNEL
+        end
+        else;
+            custom_error ERROR_CODE_FILE_NOT_FOUND$ ERROR_MSG_FILE_NOT_FOUND ERROR_DETAIL_FILE_NOT_FOUND fname
+                    
+    end_procedure 
+    
+    procedure matrix_copy_csv_in string fname
+        send matrix_copy_csv_worker fname 0
+    end_procedure 
+
+    procedure matrix_copy_csv_in_header string fname
+        send matrix_copy_csv_worker fname 1
+    end_procedure 
         
-        function_return l_sTmp
-    end_function        
+    procedure matrix_copy_csv_out string fname 
+        local integer l_iMax l_i l_j l_iValues
+        local string l_sBuf
+        
+        forward get item_count to l_iMax
+        
+        direct_output channel DEFAULT_FILE_CHANNEL fname
+            for l_i from 0 to l_iMax
+                forward get string_value item l_i to l_sBuf
+                if (l_sBuf <> "") begin
+                    if ((l_sBuf contains '"') or (l_sBuf contains ',')) begin
+                        send delete_data to (mTokens2(current_object))
+                        send set_string to (mTokens2(current_object)) l_sBuf (character(1))
+                        get token_count of (mTokens2(current_object)) to l_iValues
+        
+                        for l_j from 0 to l_iValues                 
+                            get token_value of (mTokens2(current_object)) item l_j to l_sBuf
+                            if (l_j <> 0);
+                                write channel DEFAULT_FILE_CHANNEL ','
+                            if (l_sBuf contains '"');
+                                write channel DEFAULT_FILE_CHANNEL ('"'+(replaces('"', l_sBuf, '\"'))+'"')
+                            else;
+                                write channel DEFAULT_FILE_CHANNEL l_sBuf
+                        loop
+                        writeln channel DEFAULT_FILE_CHANNEL ""
+                    end
+                    else;
+                        writeln channel DEFAULT_FILE_CHANNEL (replaces(character(1), l_sBuf, ','))
+                end
+            loop
+        close_output channel DEFAULT_FILE_CHANNEL
+    end_procedure 
+    
     
     function matrix_value integer itemx integer itemy returns string
         local string l_sBuf l_sTmp
 
         forward get array_value item itemx to l_sBuf
+        get column_value item itemy item l_sBuf to l_sTmp
         
-        send delete_data to (mTokens(current_object))
-        send set_string to (mTokens(current_object)) l_sBuf (character(1))
-        get token_value of (mTokens(current_object)) item itemy to l_sTmp
+        function_return l_sTmp
+    end_function        
+    
+    function matrix_string integer itemx integer itemy returns string
+        local string l_sTmp
+
+        get matrix_value item itemx item itemy to l_sTmp
         
         function_return l_sTmp
     end_function        
     
     function matrix_integer integer itemx integer itemy returns integer
-        local string l_sBuf
         local integer l_iTmp
-
-        forward get array_value item itemx to l_sBuf
         
-        send delete_data to (mTokens(current_object))
-        send set_string to (mTokens(current_object)) l_sBuf (character(1))
-        get token_value of (mTokens(current_object)) item itemy to l_iTmp
+        get matrix_value item itemx item itemy to l_iTmp
         
         function_return l_iTmp
     end_function
     
     function matrix_number integer itemx integer itemy returns number
-        local string l_sBuf
         local number l_nTmp
         
-        forward get array_value item itemx to l_sBuf
-        
-        send delete_data to (mTokens(current_object))
-        send set_string to (mTokens(current_object)) l_sBuf (character(1))
-        get token_value of (mTokens(current_object)) item itemy to l_nTmp
+        get matrix_value item itemx item itemy to l_nTmp
         
         function_return l_nTmp
     end_function
     
     function matrix_real integer itemx integer itemy returns real
-        local string l_sBuf
         local real l_rTmp
         
-        forward get array_value item itemx to l_sBuf
-        
-        send delete_data to (mTokens(current_object))
-        send set_string to (mTokens(current_object)) l_sBuf (character(1))
-        get token_value of (mTokens(current_object)) item itemy to l_rTmp
+        get matrix_value item itemx item itemy to l_rTmp
         
         function_return l_rTmp
     end_function
@@ -1177,6 +1238,7 @@ class matrix is an array
 
         get c_iHashOn to l_iHashOn
         move -1 to l_iIndex
+        move 0 to l_iLastIndexTablePos
             
         if (l_iHashOn <> -1) begin
             get find_hash of (mHash_table(current_object)) item val to l_iHash
@@ -1208,7 +1270,7 @@ class matrix is an array
     end_function
     
     function matrix_index_count_from_value string val returns integer
-        local integer l_iHashOn l_iHash l_iIndexValues
+        local integer l_iHashOn l_iHash l_iIndexValues l_i
         local string l_sIndexTable
     
         get c_iHashOn to l_iHashOn
@@ -1217,12 +1279,14 @@ class matrix is an array
             get find_hash of (mHash_table(current_object)) item val to l_iHash
             get string_value of (mHash_array(current_object)) item l_iHash to l_sIndexTable
     
-            send delete_data to (mTokens(current_object))
-            send set_string to (mTokens(current_object)) l_sIndexTable "|"
-            get token_count of (mTokens(current_object)) to l_iIndexValues
+            move 0 to l_iIndexValues
+            for l_i from 1 to (length(l_sIndexTable))
+                if (mid(l_sIndexTable,1,l_i) = '|');
+                    increment l_iIndexValues
+            loop
         end
     
-        function_return l_iIndexValues
+        function_return (l_iIndexValues-1)
     end_function
         
     procedure set item_count integer newVal
@@ -1230,9 +1294,9 @@ class matrix is an array
     end_procedure
     
     function item_width returns integer
-	    local integer l_iWidth
-	    get c_iWidth to l_iWidth
-	    function_return l_iWidth
+        local integer l_iWidth
+        get c_iWidth to l_iWidth
+        function_return l_iWidth
     end_function
         
     procedure matrix_delete integer itemx integer itemy
@@ -1343,12 +1407,17 @@ class matrix is an array
         forward send delete_item to current_object itemx
     end_procedure
 
-    procedure matrix_sort integer itemy string order 
+    // The routine below relies on the internal dataflex sort, doing
+    // what is essentially a nested loop join on the result and rebuilding
+    // the original matrix.  It's pretty awful and is only left here for
+    // reference.  Behaviour isn't quite quadratic, a feeble guess is
+    // something like O( (2N + Nlog(n) + N^1.8) :-(
+    procedure matrix_sort integer itemy string order
         local string l_sBuf l_sTmp l_sTmp2 l_sHash
         local integer l_iX l_i l_j l_iMax l_iPoolMax l_iWidth l_iThrow l_iNumCount l_iHashOn l_iHash
         
         move (trim(uppercase(order))) to order
-        if ((order <> "ASCENDING") and (order <> "DESCENDING")) move "ASCENDING" to order
+        if ((left(order,3) <> "ASC") and (left(order,4) <> "DESC")) move "ASCENDING" to order
         
         object mSort_array is an array
         end_object
@@ -1363,6 +1432,7 @@ class matrix is an array
         send delete_data to (mClone_array(current_object))
         
         if (l_iHashOn <> -1) begin
+            //Zero the hash
             send delete_data to (mHash_array(current_object))
         end
         
@@ -1377,9 +1447,8 @@ class matrix is an array
         
             move 0 to l_iNumCount 
             for l_j from 1 to (length(l_sTmp))
-                if (((ascii(mid(l_sTmp,1,l_j))) >= 48) and ((ascii(mid(l_sTmp,1,l_j))) <= 57) or ((ascii(mid(l_sTmp,1,l_j))) = 46)) begin
-                    increment l_iNumCount
-                end
+                if not (((ascii(mid(l_sTmp,1,l_j))) >= 48) and ((ascii(mid(l_sTmp,1,l_j))) <= 57) or ((ascii(mid(l_sTmp,1,l_j))) = 46)) break
+                increment l_iNumCount
             loop
             if ((length(l_sTmp) > 0) and (length(l_sTmp) = l_iNumCount)) begin
                 set array_value of (mSort_array(current_object)) item l_i to (number(l_sTmp))
@@ -1390,11 +1459,13 @@ class matrix is an array
             end
         loop
         
-        if (order = "ASCENDING") send sort_items to (mSort_array(current_object)) ascending
-        if (order = "DESCENDING") send sort_items to (mSort_array(current_object)) descending
+        //Rely on dataflex sort
+        if (left(order,3) = "ASC") send sort_items to (mSort_array(current_object)) ascending
+        if (left(order,4) = "DESC") send sort_items to (mSort_array(current_object)) descending
 
         move l_iMax to l_iPoolMax
 
+        // Nested loop join, sort of. Not good :-(
         for l_i from 0 to l_iMax
             get array_value of (mSort_array(current_object)) item l_i to l_sTmp
             if (l_sTmp = character(2)) move "" to l_sTmp
@@ -1416,7 +1487,7 @@ class matrix is an array
                     forward send delete_item to current_object l_iPoolMax
                     decrement l_iPoolMax                    
                         
-                    // Remap hash
+                    // Rebuild hash
                     if (l_iHashOn <> -1) begin                  
                         get token_value of (mTokens(current_object)) item l_iHashOn to l_sHash
                         get find_hash of (mHash_table(current_object)) item l_sHash to l_iHash
@@ -1442,6 +1513,132 @@ class matrix is an array
         send destroy_object to (mSort_array(current_object))  // Use "send request_destroy_object" to destroy object and all children.
         send destroy_object to (mClone_array(current_object))
     end_procedure
+
+    
+    // Recursive partition for quicksort.
+    // Dataflex arrays track the type of each row and perform a sort acordingly
+    // but we have no easy way of knowing.  So perform compare based on what a
+    // value looks "like" unless told otherwise.    
+    // Index from (lo_in), index to (hi_in), numeric/string mode (1=integer, 0=string), invert (1=descending, 0=ascending)
+    procedure partition integer lo_in integer hi_in integer mode integer itemy integer invert
+        local integer pivot lo_idx hi_idx t
+        local string pivot_val lo_row hi_row lo_val hi_val      
+        
+        if ((hi_in-lo_in) > 0) begin
+            move lo_in to lo_idx
+            move hi_in to hi_idx       
+            move ((lo_in+hi_in)/2) to pivot
+                        
+            while ((lo_idx <= pivot) AND (hi_idx >= pivot))
+                        
+                forward get array_value item pivot to pivot_val
+                get column_value item itemy item pivot_val to pivot_val
+                
+                forward get array_value item lo_idx to lo_row
+                get column_value item itemy item lo_row to lo_val
+
+                forward get array_value item hi_idx to hi_row
+                get column_value item itemy item hi_row to hi_val
+
+                
+                if (invert) begin
+                    while ( ( ((mode) and (number(lo_val) > number(pivot_val))) or (not (mode) and (lo_val > pivot_val))) and (lo_idx <= pivot))
+                        increment lo_idx
+                        forward get array_value item lo_idx to lo_row
+                        get column_value item itemy item lo_row to lo_val
+                    loop
+                    while ( ( ((mode) and (number(hi_val) < number(pivot_val))) or (not (mode) and (hi_val < pivot_val))) and (hi_idx >= pivot))
+                        decrement hi_idx
+                        forward get array_value item hi_idx to hi_row
+                        get column_value item itemy item hi_row to hi_val
+                    loop
+                end
+                else begin
+                    while ( ( ((mode) and (number(lo_val) < number(pivot_val))) or (not (mode) and (lo_val < pivot_val))) and (lo_idx <= pivot))
+                        increment lo_idx
+                        forward get array_value item lo_idx to lo_row
+                        get column_value item itemy item lo_row to lo_val
+                    loop
+                    while ( ( ((mode) and (number(hi_val) > number(pivot_val))) or (not (mode) and (hi_val > pivot_val))) and (hi_idx >= pivot))
+                        decrement hi_idx
+                        forward get array_value item hi_idx to hi_row
+                        get column_value item itemy item hi_row to hi_val
+                    loop
+                end
+                
+                forward set array_value item lo_idx to hi_row
+                forward set array_value item hi_idx to lo_row
+                
+                increment lo_idx
+                decrement hi_idx
+                
+                if ((lo_idx-1) = pivot) begin
+                    increment hi_idx
+                    move hi_idx to pivot
+                end
+                else if ((hi_idx+1) = pivot) begin
+                    decrement lo_idx
+                    move lo_idx to pivot
+                end
+                
+            loop
+    
+            if ((pivot-lo_in) > 1);
+                send partition lo_in (pivot-1) mode itemy invert
+            if ((hi_in-pivot) > 1);
+                send partition (pivot+1) hi_in mode itemy invert
+        end        
+    end_procedure   
+    
+    // Perform a quick sort on a perticular column (y) in the martix
+    // This is done in native dataflex, so no match for compiled C
+    procedure quick_sort integer itemy string order integer mode
+        local integer l_i l_j l_iHashOn l_iMax l_iInvert
+        local string l_sBuf
+        
+        if (uppercase(left(trim(order),4)) = "DESC") move 1 to l_iInvert
+        else move 0 to l_iInvert    
+        
+        get item_count to l_iMax
+        
+        // If we've not been told string/numeric, try and work out here.
+        if (mode = -1) begin
+            for l_i from 0 to (l_iMax-1)
+                forward get array_value item l_i to l_sBuf
+                get column_value item itemy item l_sBuf to l_sBuf
+                move (is_number(l_sBuf)) to mode
+                if (mode = 0) break
+            loop
+        end
+        
+        // Remove the current hash index if there is one        
+        get c_iHashOn to l_iHashOn
+        if (l_iHashOn <> -1);
+            send remove_hash_on_column  
+        
+        // Do the quick-sort
+        send partition 0 (l_iMax-1) mode itemy l_iInvert
+        
+        // Recreate any the hash if there was one
+        if (l_iHashOn <> -1);
+            send hash_on_column l_iHashOn
+
+    end_procedure
+    
+    //Wrapper for sort_items
+    procedure sort_items integer itemy string order
+        send quick_sort itemy order -1
+    end_procedure
+    
+    //Wrapper for sort_items
+    procedure sort_items_ascii integer itemy string order
+        send quick_sort itemy order 0
+    end_procedure    
+    
+    //Wrapper for sort_items
+    procedure sort_items_num integer itemy string order
+        send quick_sort itemy order 1
+    end_procedure        
     
 end_class
 
