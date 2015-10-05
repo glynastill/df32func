@@ -1,2 +1,1 @@
-*.src linguist-language=DataFlex
-*.inc linguist-language=DataFlex
+src/df32/*.* linguist-language=DataFlex
