@@ -796,6 +796,8 @@ end_class
 //    sort_items_num                - Y pos to sort on, ASC OR DESC (numeric)
 //    matrix_delete                 - X and Y pos to delete 
 //    delete_item                   - X position to delete (this reshuffles the matrix; avoid using)
+//    type_store                    - Store column type against column (speeds up sort_items at expense of numeric inserts) DEFAULT
+//    remove_type_store             - Do not store column type against column (speeds up numeric inserts at expense of sort_items (but not sort_items_ascii or num))
 //    hash_on_column_algorithm      - Hash algorithm to use
 //    hash_on_column                - Y pos of column to hash
 //    remove_hash_on_column         - Remove the hash from the column
@@ -870,13 +872,17 @@ class matrix is an array
         property integer c_iLastIndexTableHash
         property integer c_iLastIndexTablePos
         property integer c_iEnforceUnique
+        property integer c_iMaintainTypes
         property string c_sHashAlgorithm
+        property string c_sTypes
         
+        set c_sTypes to ""
         set c_sHashAlgorithm to ""
         set c_iHashOn to -1
         set c_iLastIndexTableHash to -1
         set c_iLastIndexTablePos to -1
         set c_iEnforceUnique to 0
+        set c_iMaintainTypes to 1
     end_procedure    
     
     // Pull the value of a column from the string representation
@@ -899,10 +905,19 @@ class matrix is an array
             set c_sHashAlgorithm to hashalg
         end     
     end_procedure
+
+    procedure type_store
+        set c_iMaintainTypes to 1
+    end_procedure
+    
+    procedure remove_type_store
+        set c_iMaintainTypes to 0
+        set c_sTypes to ""
+    end_procedure    
     
     procedure hash_is_unique
         set c_iEnforceUnique to 1
-    end_procedure   
+    end_procedure
     
     procedure remove_hash_is_unique
         set c_iEnforceUnique to 0
@@ -981,15 +996,31 @@ class matrix is an array
     end_procedure
         
     procedure set matrix_value integer itemx integer itemy string val
-        local string l_sBuf l_sTmp l_sOldVal 
-        local integer l_i l_iWidth l_iHashOn l_iHash l_iEnforceUnique l_iHashError
+        local string l_sBuf l_sTmp l_sOldVal l_sTypes
+        local integer l_i l_iWidth l_iHashOn l_iHash l_iEnforceUnique l_iHashError l_iMaintainTypes
 
         move 0 to l_iHashError
         get c_iWidth to l_iWidth
-        get c_iHashOn to l_iHashOn
+        get c_iHashOn to l_iHashOn        
         
         forward get array_value item itemx to l_sBuf
-                        
+        
+        //Maintain (guess of) types of columns
+        get c_iMaintainTypes to l_iMaintainTypes
+        if (l_iMaintainTypes = 1) begin
+            get c_sTypes to l_sTypes
+            //All columns start off as numeric
+            while (length(l_sTypes) < 1+itemy)
+                append l_sTypes "1"
+            loop
+            //If we encounter a non-numeric value when we have defined numeric switch the type
+            if ((mid(l_sTypes,1,1+itemy) = "1") and not (is_number(val))) begin
+                move (overstrike("0",l_sTypes,1+itemy)) to l_sTypes
+                set c_sTypes to l_sTypes
+            end        
+        end
+        
+        // Maintain width of matrix                
         if (itemy > l_iWidth) begin
                 set c_iWidth to itemy
                 move itemy to l_iWidth
@@ -1058,12 +1089,14 @@ class matrix is an array
     end_procedure
     
     procedure matrix_append_csv string row        
-        local integer l_iMax l_iValues l_i l_iHashOn l_iWidth l_iCount
-        local string l_sBuf
+        local integer l_iMax l_iValues l_i l_iHashOn l_iWidth l_iOffset l_iCount l_iMaintainTypes
+        local string l_sChar l_sBuf l_sTypes
             
         get c_iHashOn to l_iHashOn
         forward get item_count to l_iMax
         
+        // If the csv data contains quoted data we currenlty have to
+        // pass each column on to matrix_value
         if ((l_iHashOn <> -1) or (row contains '"')) begin 
             send delete_data to (mTokens2(current_object))
             send set_string_csv to (mTokens2(current_object)) row
@@ -1077,14 +1110,51 @@ class matrix is an array
                 if (err) break
             loop
         end
+        // Otherwise we take a shortcut and set the array row in one
         else begin
-            get c_iWidth to l_iWidth 
+            // Maintain width of matrix
+            get c_iWidth to l_iWidth
+            
+            //Maintain (guess of) types of columns
+            get c_iMaintainTypes to l_iMaintainTypes            
+            if (l_iMaintainTypes = 1) begin
+                get c_sTypes to l_sTypes
+                move 0 to l_iOffset
+            end      
+            else;
+                move (pos(',', row)) to l_iOffset
+            
             move 0 to l_iCount
+            move "" to l_sBuf
             forward set array_value item l_iMax to (replaces(',', row, character(1)))
-            for l_i from (pos(',', row)) to (length(row))
-                if (mid(row,1,l_i) = ',') increment l_iCount
+            for l_i from l_iOffset to (length(row))
+                move (mid(row,1,l_i))  to l_sChar
+                if (l_sChar = ',') begin
+                    increment l_iCount
+                    
+                    if (l_iMaintainTypes = 1) begin
+                        //All columns start off as numeric
+                        while (length(l_sTypes) < l_iCount)
+                            append l_sTypes "1"
+                        loop
+                        //If we encounter a non-numeric value when we have defined numeric switch the type
+                        if ((mid(l_sTypes,1,l_iCount) = "1") and not (is_number(l_sBuf))) begin
+                            move (overstrike("0",l_sTypes,l_iCount)) to l_sTypes
+                        end                             
+                        move "" to l_sBuf
+                    end
+                end
+                else if (l_iMaintainTypes = 1);
+                    append l_sBuf l_sChar
             loop            
-            if (l_iCount > l_iWidth) set c_iWidth to l_iCount
+            if (l_iCount > l_iWidth);
+                set c_iWidth to l_iCount
+            if (l_iMaintainTypes = 1) begin
+                if ((mid(l_sTypes,1,l_iCount) = "1") and not (is_number(l_sBuf))) begin
+                    move (overstrike("0",l_sTypes,l_iCount)) to l_sTypes
+                end        
+                set c_sTypes to l_sTypes
+            end   
         end
 
     end_procedure
@@ -1152,8 +1222,7 @@ class matrix is an array
             loop
         close_output channel DEFAULT_FILE_CHANNEL
     end_procedure 
-    
-    
+        
     function matrix_value integer itemx integer itemy returns string
         local string l_sBuf l_sTmp
 
@@ -1327,7 +1396,7 @@ class matrix is an array
 
         forward set array_value item itemx to l_sBuf
         
-        // Delete in the value to the hash
+        // Delete the value in the hash
         if (l_iHashOn = itemy) begin                
             get find_hash of (mHash_table(current_object)) item l_sOldVal to l_iHash
             if (l_iHash <> 0) begin                     
@@ -1353,7 +1422,7 @@ class matrix is an array
         local integer l_iHashOn l_iHash l_i l_j l_iItems l_iIndexValues l_iIndex
         
         get c_iHashOn to l_iHashOn
-        // Delete in the value to the hash
+        // Delete the value in the hash
         if (l_iHashOn <> -1) begin
             forward get array_value item itemx to l_sBuf
             send delete_data to (mTokens(current_object))
@@ -1590,11 +1659,11 @@ class matrix is an array
         end        
     end_procedure   
     
-    // Perform a quick sort on a perticular column (y) in the martix
+    // Perform a quick sort on a particular column (y) in the martix
     // This is done in native dataflex, so no match for compiled C
     procedure quick_sort integer itemy string order integer mode
-        local integer l_i l_j l_iHashOn l_iMax l_iInvert
-        local string l_sBuf
+        local integer l_i l_j l_iHashOn l_iMax l_iInvert l_iMaintainTypes
+        local string l_sBuf l_sTypes
         
         if (uppercase(left(trim(order),4)) = "DESC") move 1 to l_iInvert
         else move 0 to l_iInvert    
@@ -1603,12 +1672,21 @@ class matrix is an array
         
         // If we've not been told string/numeric, try and work out here.
         if (mode = -1) begin
-            for l_i from 0 to (l_iMax-1)
-                forward get array_value item l_i to l_sBuf
-                get column_value item itemy item l_sBuf to l_sBuf
-                move (is_number(l_sBuf)) to mode
-                if (mode = 0) break
-            loop
+            // If  we've been maintaining type information use it
+            get c_iMaintainTypes to l_iMaintainTypes
+            if (l_iMaintainTypes = 1) begin
+                get c_sTypes to l_sTypes
+                move (integer(mid(l_sTypes,1,1+itemy))) to mode             
+            end
+            // Else loop until we can make a decision
+            else begin
+                for l_i from 0 to (l_iMax-1)
+                    forward get array_value item l_i to l_sBuf
+                    get column_value item itemy item l_sBuf to l_sBuf
+                    move (is_number(l_sBuf)) to mode
+                    if (mode = 0) break
+                loop
+            end
         end
         
         // Remove the current hash index if there is one        
