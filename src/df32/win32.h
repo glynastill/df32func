@@ -43,6 +43,7 @@ external_function SetConsoleTitle "SetConsoleTitleA" Kernel32.dll string lpszTit
 external_function FindWindow "FindWindowA" user32.dll pointer lpszClassName string lpszWindowName returns handle
 external_function GetSystemMenu "GetSystemMenu" user32.dll handle hwnd dword bRevert returns dword
 external_function EnableMenuItem "EnableMenuItem" user32.dll handle hmenu integer uIDEnableItem integer uEnable returns integer
+external_function ShowWindow "ShowWindow" user32.dll handle hWnd integer nCmdShow returns integer
 external_function ShellExecute "ShellExecuteA" shell32.dll handle hWnd pointer lpOperation pointer lpFile pointer lpParameters pointer lpDirectory integer nShowCmd returns integer
 external_function CreateProcess "CreateProcessA" kernel32.dll pointer lpAN pointer lpCL pointer lpPA pointer lpTA integer bIH dword dwCF pointer lpE pointer lpCD pointer lpSI pointer lpPi returns integer
 external_function OpenProcess "OpenProcess" kernel32.dll dword dwDesiredAccessas integer bInheritHandle dword dwProcId returns handle

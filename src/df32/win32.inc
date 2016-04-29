@@ -453,6 +453,18 @@ function disable_close global integer argv returns integer
     function_return 0
 end_function
 
+// Manipulate cmd window to minimise maximise etc. E.g show_window("pap", SW_MINIMIZE)
+function show_window global string argv integer argv2 returns integer
+    local number Ret
+    local handle hWnd
+
+    move (SetConsoleTitle(argv)) to strmark     
+    move (FindWindow(0, argv)) to hWnd      
+    move (ShowWindow(hWnd, argv2)) to ret   
+
+    function_return ret
+end_function
+
 // This function will run any external application directly from dataflex
 // argv = application to run (command name/path) argv2 = any parameters to pass to the program argv3 = directory to run from
 function shell_exec global string argv string argv2 string argv3 returns integer
